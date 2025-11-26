@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "author": "Hồ Gia Huy",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "wokwi-breadboard", "id": "bb1", "top": 6.6, "left": 204.4, "attrs": {} },
+    { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": 0, "left": 0, "attrs": {} },
+    { "type": "wokwi-led", "id": "led1", "top": 15.6, "left": 215, "attrs": { "color": "red" } },
+    {
+      "type": "wokwi-resistor",
+      "id": "r1",
+      "top": 91.2,
+      "left": 210.65,
+      "rotate": 90,
+      "attrs": { "value": "220" }
+    },
+    { "type": "wokwi-potentiometer", "id": "pot1", "top": 257.9, "left": 268.6, "attrs": {} }
+  ],
+  "connections": [
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+    [ "esp:GND.1", "bb1:bn.1", "black", [ "h-14.21", "v67.2", "h259.2", "v9.6" ] ],
+    [ "esp:3V3", "bb1:bp.1", "black", [ "h-23.81", "v201.6", "h259.2", "v-38.4" ] ],
+    [ "bb1:2b.j", "bb1:bp.2", "red", [ "v9.6", "h19.2" ] ],
+    [ "bb1:1t.e", "bb1:bn.2", "red", [ "v0", "h-28.8", "v144", "h57.6" ] ],
+    [ "pot1:SIG", "esp:34", "blue", [ "v9.6", "h-336.4", "v-268.8" ] ],
+    [ "pot1:VCC", "bb1:bp.3", "blue", [ "v9.6", "h28", "v-86.4", "h-76.8" ] ],
+    [ "pot1:GND", "bb1:bn.3", "black", [ "v19.2", "h-38.4", "v-96", "h9.6" ] ],
+    [ "led1:A", "bb1:2t.a", "", [ "$bb" ] ],
+    [ "led1:C", "bb1:1t.a", "", [ "$bb" ] ],
+    [ "r1:1", "bb1:2t.b", "", [ "$bb" ] ],
+    [ "r1:2", "bb1:2b.f", "", [ "$bb" ] ]
+  ],
+  "dependencies": {}
+}
