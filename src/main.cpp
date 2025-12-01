@@ -1,11 +1,29 @@
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 #include "DHT.h"
-#include <Wifi.h>
-// WIFI
+#include <WiFi.h>
+#include <PubSubClient.h>
+// =================== WIFI  ==================
 const char *ssid = "Wokwi-GUEST";
 const char* password = "";
 
+// ================== SET SERVER ================
+const char *mqttServer = "broker.hivemq.com";
+int port = 1883;
+
+WiFiClient wifiClient;
+PubSubClient mqttClient(wifiClient);
+
+// IoT23CLC09/Group5/#
+// ================= Publish topics ==================
+const char *soilData = "IoT23CLC09/Group5/data/soil";
+const char *airData = "IoT23CLC09/Group5/data/air";
+const char *tempData = "IoT23CLC09/Group5/data/temperature";
+const char *lightStatus = "IoT23CLC09/Group5/status/light";
+const char *pumpStatus = "IoT23CLC09/Group5/status/pump";
+
+// ================== Subscribe Topics ==================
+const char *settingsCmd = "IoT23CLC09/Group5/cmd/settings";
 // ================== PIN DEFINE ==================
 #define LED_PIN        15
 #define BUZZER_PIN     5
@@ -46,7 +64,10 @@ float airTemperature = 0;    // from DHT22
 int cfgWaterLiters       = 10;  // Lít nước / lần tưới
 int cfgMinutesPerHour    = 10;  // Phút tưới trong 1 giờ
 int cfgMoistureThreshold = 40;  // Ngưỡng % đất dưới mức này mới tưới
-
+int cfgSoilMin           = 40;
+int cfgSoilMax           = 80;
+int cfgTempMin           = 18; // Thêm biến cho Nhiệt độ Min
+int cfgTempMax           = 28; // Thêm biến cho Nhiệt độ Max
 // Value being adjusted in config mode (preview)
 int editingValue = 0;
 
@@ -94,7 +115,10 @@ void updateLCD();
 void showNormalScreen(bool forceClear);
 void showConfigScreen(bool forceClear);
 int  mapPotToRange(int potValue, int minVal, int maxVal);
+
 void wifiConnect();
+void mqttConnect();
+void callback(char* topic, byte* payload, unsigned int length);
 // ================== SETUP ==================
 void setup() {
   Serial.begin(115200);
@@ -120,6 +144,9 @@ void setup() {
   lcd.print("Starting...");
   delay(1000);
   wifiConnect();
+  mqttClient.setServer(mqttServer, port);
+  mqttClient.setCallback(callback);
+  mqttClient.setKeepAlive(60);
 }
 
 // ================== MAIN LOOP ==================
@@ -129,6 +156,13 @@ void loop() {
     Serial.print("Reconnecting to WiFi");
     wifiConnect();
   }
+
+  if (!mqttClient.connected())
+  {
+    mqttConnect();
+  }
+  mqttClient.loop();
+
   unsigned long now = millis();
 
   handleButton();
@@ -234,14 +268,23 @@ void updateSensors() {
 
   int rawSoil = analogRead(SOIL_POT_PIN);
   soilMoisture = map(rawSoil, 0, 4095, 0, 100);
-
+  
   if (now - lastDhtReadTime >= dhtReadInterval) {
     lastDhtReadTime = now;
+    mqttClient.publish(soilData, String(soilMoisture).c_str());
     float h = dht.readHumidity();
     float t = dht.readTemperature();
 
-    if (!isnan(h)) airHumidity = h;
-    if (!isnan(t)) airTemperature = t;
+    if (!isnan(h)){
+      airHumidity = h;
+      mqttClient.publish(airData, String(airHumidity).c_str());
+      // Serial.println("Da gui Air Humidity"); 
+    }
+    if (!isnan(t)) {
+      airTemperature = t;
+      mqttClient.publish(tempData, String(airTemperature).c_str());
+      // Serial.println("Da gui Temperature"); 
+    }
   }
 
   if (currentMode == MODE_CONFIG) {
@@ -451,8 +494,41 @@ void wifiConnect()
   lcd.clear();
   lcd.setCursor(0, 0);
   lcd.print("WiFi Connected!");
+  delay(500);
   lcd.setCursor(0, 1);
   lcd.print(WiFi.localIP().toString());
 
   Serial.println("WiFi connected");
+}
+
+void mqttConnect()
+{
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("MQTT Connecting");
+  while (!mqttClient.connected())
+  {
+    String clientId = "ESP32Client-" + String(random(0xffff), HEX);
+    Serial.print("Connecting to MQTT broker...");
+    if (mqttClient.connect(clientId.c_str()))
+    {
+      Serial.println("connected");
+      lcd.clear();
+      lcd.print("MQTT OK!");
+      delay(1000);
+      mqttClient.subscribe(settingsCmd);
+    }
+    else
+    {
+      Serial.print("failed, rc=");
+      Serial.print(mqttClient.state());
+      Serial.println(" try again in 2s");
+      delay(2000);
+    }
+  }
+}
+
+void callback(char *topic, byte *message, unsigned int length)
+{
+
 }
