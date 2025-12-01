@@ -32,6 +32,8 @@ const char *settingsCmd = "IoT23CLC09/Group5/cmd/settings";
 #define CONFIG_POT_PIN 35   // pot2 -> Config adjust
 #define DHT_PIN        32
 #define DHT_TYPE       DHT22
+#define RELAY_PUMP     4    // Pin relay điều khiển bơm nước
+#define RELAY_LIGHT    16    // Pin relay điều khiển đèn
 
 // LCD I2C
 LiquidCrystal_I2C lcd(0x27, 16, 2);
