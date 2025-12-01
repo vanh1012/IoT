@@ -1,6 +1,10 @@
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 #include "DHT.h"
+#include <Wifi.h>
+// WIFI
+const char *ssid = "Wokwi-GUEST";
+const char* password = "";
 
 // ================== PIN DEFINE ==================
 #define LED_PIN        15
@@ -90,7 +94,7 @@ void updateLCD();
 void showNormalScreen(bool forceClear);
 void showConfigScreen(bool forceClear);
 int  mapPotToRange(int potValue, int minVal, int maxVal);
-
+void wifiConnect();
 // ================== SETUP ==================
 void setup() {
   Serial.begin(115200);
@@ -115,6 +119,7 @@ void setup() {
   lcd.setCursor(0, 1);
   lcd.print("Starting...");
   delay(1000);
+  wifiConnect();
 }
 
 // ================== MAIN LOOP ==================
@@ -406,4 +411,43 @@ void showConfigScreen(bool forceClear) {
       lcd.print(" %   ");
       break;
   }
+}
+
+void wifiConnect()
+{
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("WiFi Connecting");
+
+  int dotCount = 0;
+
+  WiFi.begin(ssid, password);
+
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    lcd.setCursor(0, 1);
+
+    lcd.print("Connecting");
+    for (int i = 0; i < dotCount; i++)
+    {
+      lcd.print(".");
+    }
+    for (int i = dotCount; i < 3; i++)
+    {
+      lcd.print(" "); 
+    }
+
+    dotCount = (dotCount + 1) % 4;
+
+    delay(500);
+  }
+
+  // Khi kết nối xong
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("WiFi Connected!");
+  lcd.setCursor(0, 1);
+  lcd.print(WiFi.localIP().toString());
+
+  Serial.println("WiFi connected");
 }
