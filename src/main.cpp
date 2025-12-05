@@ -41,7 +41,6 @@ void setup()
 void loop()
 {
   checkNetworkConnection();
-
   handleInput();
   updateSensors();
   updateSystem();
