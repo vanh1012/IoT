@@ -1,14 +1,19 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import bcrypt from "bcrypt";
+dotenv.config();
+
+const hash = await bcrypt.hash("123456", 10);
+console.log(hash);
 
 import './config/db.js';
 import './config/mqtt.js';
 import sensorRoutes from './routes/sensorRoutes.js';
 import deviceRoutes from "./routes/deviceRoutes.js";
-import mqttRoutes from "./routes/mqttRoutes.js";
-
-dotenv.config();
+import mqttRoutes   from "./routes/mqttRoutes.js";
+import authRoutes   from "./routes/authRoutes.js";
+import scheduleRoutes from "./routes/scheduleRoutes.js"
 
 const app = express();
 app.use(cors());
@@ -16,6 +21,8 @@ app.use(express.json());
 app.use('/api/sensors', sensorRoutes);
 app.use("/api/device", deviceRoutes);
 app.use("/api/mqtt", mqttRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/schedule", scheduleRoutes);
 
 app.get('/', (req, res) => {
   res.send("Smart IoT API Running!");
