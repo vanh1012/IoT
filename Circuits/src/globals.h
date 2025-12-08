@@ -2,21 +2,24 @@
 #include <Arduino.h>
 #include <LiquidCrystal_I2C.h>
 #include <DHT.h>
+#include <WiFi.h>
+#include <PubSubClient.h>
+#include <ArduinoJson.h>
 
 #define DHTTYPE DHT22
 
-// ================== LCD & DHT ==================
+// ====== Khai báo LCD , DHT, MQTT (định nghĩa ở main.cpp) ======
 extern LiquidCrystal_I2C lcd;
 extern DHT dht;
-
-// ================== PINOUT ==================
-extern const int MENU_POT_PIN;      // Biến trở menu/config
-extern const int SOIL_PIN;          // Mô phỏng độ ẩm đất (ADC)
-extern const int BUTTON_PIN;        // Nút nhấn
-extern const int DHT_PIN;           // DHT22 data
-extern const int RELAY_PUMP_PIN;    // Relay máy bơm
-extern const int RELAY_LIGHT_PIN;   // Relay đèn
-extern const int STATUS_LED_PIN;    // LED GPIO15 nhấp nháy
+extern PubSubClient mqttClient;
+// ====== Chân cứng ======
+extern const int MENU_POT_PIN;
+extern const int SOIL_PIN;
+extern const int BUTTON_PIN;
+extern const int DHT_PIN;
+extern const int RELAY_PUMP_PIN;
+extern const int RELAY_LIGHT_PIN;
+extern const int STATUS_LED_PIN;
 
 // ================== MODE ==================
 enum Mode {

@@ -1,6 +1,9 @@
 #include "sensors.h"
+#include "connect.h"
 
 static int lastButtonState = LOW;
+unsigned long lastDhtReadTime = 0;
+const unsigned long dhtReadInterval = 2000;
 
 bool buttonPressedOnce() {
   int state = digitalRead(BUTTON_PIN);
@@ -13,17 +16,33 @@ bool buttonPressedOnce() {
   return pressed;
 }
 
-void readSensors() {
-  float t = dht.readTemperature();
-  float h = dht.readHumidity();
+void readSensors()
+{
+  unsigned long currentMillis = millis();
 
-  if (!isnan(t)) currentTemp = t;
-  if (!isnan(h)) currentHumidity = h;
+  // Kiểm tra nếu đủ 2s đọc lại
+  if (currentMillis - lastDhtReadTime >= dhtReadInterval)
+  {
+    lastDhtReadTime = currentMillis;
 
-  soilRaw = analogRead(SOIL_PIN);   // 0-4095
-  // 0 = rất ướt, 4095 = rất khô -> % ẩm
-  soilPercent = map(soilRaw, 4095, 0, 0, 100);
-  soilPercent = constrain(soilPercent, 0, 100);
+    float t = dht.readTemperature();
+    float h = dht.readHumidity();
+
+    if (!isnan(t))
+      currentTemp = t;
+    if (!isnan(h))
+      currentHumidity = h;
+
+    soilRaw = analogRead(SOIL_PIN);
+    soilPercent = map(soilRaw, 4095, 0, 0, 100);
+
+    if (soilPercent < 0)
+      soilPercent = 0;
+    if (soilPercent > 100)
+      soilPercent = 100;
+    mqttPublishData();
+    }
+
 }
 
 void updateThresholdStates() {
