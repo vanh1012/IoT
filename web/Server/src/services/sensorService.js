@@ -9,3 +9,20 @@ export const getHistory = async (limit = 50) => {
     .sort({ timestamp: -1 })
     .limit(limit);
 };
+
+export const saveIfChanged = async (newData) => {
+  const latest = await getLatest();
+
+  if (!latest) {
+    return await Sensor.create(newData);
+  }
+
+  const isDifferent =
+    latest.soilMoisture !== newData.soilMoisture ||
+    latest.airHumidity !== newData.airHumidity ||
+    latest.airTemperature !== newData.airTemperature;
+
+  if (!isDifferent) return null; 
+
+  return await Sensor.create(newData);
+};

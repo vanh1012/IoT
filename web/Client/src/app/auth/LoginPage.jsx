@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 import { Button } from "../../components/ui/button";
 import {
@@ -18,12 +19,19 @@ import { Leaf, Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
     const navigate = useNavigate();
+    const { login, isAuthenticated } = useAuth();
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+
+    useEffect(() => {
+        if (isAuthenticated) {
+            navigate("/");
+        }
+    }, [isAuthenticated, navigate]);
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -35,13 +43,8 @@ export default function LoginPage() {
             if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
                 throw new Error("Please enter a valid email");
 
-            // Simulated login
-            localStorage.setItem(
-                "user",
-                JSON.stringify({ email, name: email.split("@")[0] })
-            );
-
-            navigate("/dashboard");
+            await login(email, password);
+            navigate("/");
         } catch (err) {
             setError(err.message || "Login failed");
         } finally {

@@ -1,5 +1,6 @@
 import mqtt from "mqtt";
 import Sensor from "../models/Sensor.js";
+import { saveIfChanged } from "../services/sensorService.js";
 
 const client = mqtt.connect("mqtt://broker.hivemq.com", {
   port: 1883,
@@ -21,13 +22,19 @@ client.on("message", async (topic, message) => {
       timestamp: new Date(),
     };
 
-    await Sensor.create(data);
-    console.log("Sensor saved:", data);
+    const result = await saveIfChanged(data);
+
+    // if (result) {
+    //   console.log("📥 New sensor data saved:", result);
+    // } else {
+    //   console.log("⚠️ Data is same as latest → skipped");
+    // }
 
   } catch (err) {
     console.error("MQTT parse/save error:", err.message);
   }
 });
+
 
 export const publishSettings = (settings) => {
   client.publish("IoT23CLC09/Group5/cmd/settings", JSON.stringify(settings));
