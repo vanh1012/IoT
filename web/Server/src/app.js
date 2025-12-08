@@ -11,6 +11,11 @@ import './config/db.js';
 import './config/mqtt.js';
 import sensorRoutes from './routes/sensorRoutes.js';
 import deviceRoutes from "./routes/deviceRoutes.js";
+import mqttRoutes from "./routes/mqttRoutes.js";
+import projectBotRoutes from './routes/projectBotRoutes.js';
+import predictionRoutes from './routes/predictionRoutes.js';
+
+dotenv.config();
 import mqttRoutes   from "./routes/mqttRoutes.js";
 import authRoutes   from "./routes/authRoutes.js";
 import scheduleRoutes from "./routes/scheduleRoutes.js"
@@ -20,6 +25,10 @@ app.use(cors());
 app.use(express.json());
 app.use('/api/sensors', sensorRoutes);
 app.use("/api/device", deviceRoutes);
+app.use("/api/mqtt", mqttRoutes)
+
+app.use("/api/project-bot", projectBotRoutes);
+app.use("/api/prediction", predictionRoutes);
 app.use("/api/mqtt", mqttRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/schedule", scheduleRoutes);
