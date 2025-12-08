@@ -1,14 +1,12 @@
-// hardware.cpp
 #include "hardware.h"
 
-// Biến nội bộ cho LED15 nhấp nháy
 static unsigned long lastBlinkMillis = 0;
 static bool statusLedState = false;
 
 void setupHardware() {
   pinMode(MENU_POT_PIN, INPUT);
   pinMode(SOIL_PIN, INPUT);
-  pinMode(BUTTON_PIN, INPUT); // đã có R kéo xuống ngoài
+  pinMode(BUTTON_PIN, INPUT);  // có R kéo xuống ngoài
   pinMode(RELAY_PUMP_PIN, OUTPUT);
   pinMode(RELAY_LIGHT_PIN, OUTPUT);
   pinMode(STATUS_LED_PIN, OUTPUT);

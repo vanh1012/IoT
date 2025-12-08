@@ -1,4 +1,3 @@
-// sensors.cpp
 #include "sensors.h"
 
 static int lastButtonState = LOW;
@@ -8,7 +7,7 @@ bool buttonPressedOnce() {
   bool pressed = false;
   if (lastButtonState == LOW && state == HIGH) {
     pressed = true;
-    delay(20);
+    delay(20); // debounce
   }
   lastButtonState = state;
   return pressed;
@@ -21,16 +20,25 @@ void readSensors() {
   if (!isnan(t)) currentTemp = t;
   if (!isnan(h)) currentHumidity = h;
 
-  soilRaw = analogRead(SOIL_PIN);
+  soilRaw = analogRead(SOIL_PIN);   // 0-4095
+  // 0 = rất ướt, 4095 = rất khô -> % ẩm
   soilPercent = map(soilRaw, 4095, 0, 0, 100);
-  if (soilPercent < 0) soilPercent = 0;
-  if (soilPercent > 100) soilPercent = 100;
+  soilPercent = constrain(soilPercent, 0, 100);
 }
 
 void updateThresholdStates() {
-  tempOverThreshold  = (!isnan(currentTemp)     && currentTemp     > tempThresholdC);
-  soilOverThreshold  = (soilPercent             > soilThresholdPercent);
-  humidOverThreshold = (!isnan(currentHumidity) && currentHumidity > humidThresholdPercent);
+  // Vượt ngưỡng = NẰM NGOÀI [LOW, HIGH]
+  tempOverThreshold =
+    (!isnan(currentTemp) &&
+     (currentTemp < tempThresholdLowC || currentTemp > tempThresholdHighC));
+
+  soilOverThreshold =
+    (soilPercent < soilThresholdLowPercent || soilPercent > soilThresholdHighPercent);
+
+  humidOverThreshold =
+    (!isnan(currentHumidity) &&
+     (currentHumidity < humidThresholdLowPercent ||
+      currentHumidity > humidThresholdHighPercent));
 
   alertFlags = 0;
   if (tempOverThreshold)  alertFlags |= ALERT_TEMP;

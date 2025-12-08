@@ -1,26 +1,24 @@
-// globals.h
 #pragma once
 #include <Arduino.h>
 #include <LiquidCrystal_I2C.h>
 #include <DHT.h>
 
-// ====== DHT loại ======
 #define DHTTYPE DHT22
 
-// ====== Khai báo LCD & DHT (định nghĩa ở main.cpp) ======
+// ================== LCD & DHT ==================
 extern LiquidCrystal_I2C lcd;
 extern DHT dht;
 
-// ====== Chân cứng ======
-extern const int MENU_POT_PIN;
-extern const int SOIL_PIN;
-extern const int BUTTON_PIN;
-extern const int DHT_PIN;
-extern const int RELAY_PUMP_PIN;
-extern const int RELAY_LIGHT_PIN;
-extern const int STATUS_LED_PIN;
+// ================== PINOUT ==================
+extern const int MENU_POT_PIN;      // Biến trở menu/config
+extern const int SOIL_PIN;          // Mô phỏng độ ẩm đất (ADC)
+extern const int BUTTON_PIN;        // Nút nhấn
+extern const int DHT_PIN;           // DHT22 data
+extern const int RELAY_PUMP_PIN;    // Relay máy bơm
+extern const int RELAY_LIGHT_PIN;   // Relay đèn
+extern const int STATUS_LED_PIN;    // LED GPIO15 nhấp nháy
 
-// ====== Menu & mode ======
+// ================== MODE ==================
 enum Mode {
   MODE_MENU,
   MODE_TEMP_CONFIG,
@@ -36,34 +34,43 @@ extern int  selectedIndex;
 extern const int   MENU_COUNT;
 extern const char* menuItems[];
 
-// ====== Ngưỡng & trạng thái ======
-extern int minTempThresholdC;
-extern int maxTempThresholdC;
-extern int tempThresholdC;
+// ================== NGƯỠNG CHO PHÉP (CONSTANT) ==================
+extern const int minTempThresholdC;         // 0
+extern const int maxTempThresholdC;         // 70
 
-extern int minSoilThresholdPercent;
-extern int maxSoilThresholdPercent;
-extern int soilThresholdPercent;
+extern const int minSoilThresholdPercent;   // 0
+extern const int maxSoilThresholdPercent;   // 100
 
-extern int minHumThresholdPercent;
-extern int maxHumThresholdPercent;
-extern int humidThresholdPercent;
+extern const int minHumThresholdPercent;    // 0
+extern const int maxHumThresholdPercent;    // 100
 
-// Cảm biến hiện tại
+// ================== NGƯỠNG ĐANG CẤU HÌNH (LOW/HIGH) ==================
+extern int tempThresholdLowC;
+extern int tempThresholdHighC;
+
+extern int soilThresholdLowPercent;
+extern int soilThresholdHighPercent;
+
+extern int humidThresholdLowPercent;
+extern int humidThresholdHighPercent;
+
+// ================== GIÁ TRỊ CẢM BIẾN ==================
 extern float currentTemp;
 extern float currentHumidity;
 extern int   soilRaw;
 extern int   soilPercent;
 
-// Vượt ngưỡng
+// ================== TRẠNG THÁI VƯỢT NGƯỠNG ==================
+// Ở đây hiểu là GIÁ TRỊ NẰM NGOÀI [LOW, HIGH]
 extern bool   tempOverThreshold;
 extern bool   soilOverThreshold;
 extern bool   humidOverThreshold;
+
 extern uint8_t alertFlags;
 extern const uint8_t ALERT_TEMP;
 extern const uint8_t ALERT_SOIL;
 extern const uint8_t ALERT_HUMID;
 
-// Relay trạng thái
+// ================== TRẠNG THÁI RELAY ==================
 extern bool pumpOn;
 extern bool lightOn;

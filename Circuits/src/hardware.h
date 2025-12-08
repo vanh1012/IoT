@@ -1,4 +1,3 @@
-// hardware.h
 #pragma once
 #include "globals.h"
 
