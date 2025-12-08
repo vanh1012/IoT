@@ -5,7 +5,7 @@
 #include "sensors.h"
 #include "actuators.h"
 #include "menu.h"
-
+#include "connect.h"
 // ====== ĐỊNH NGHĨA BIẾN TOÀN CỤC (khớp với extern trong globals.h) ======
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 
@@ -71,9 +71,13 @@ void setup() {
   Serial.begin(115200);
   setupHardware();
   initMenuRenderState();
+  setupNetwork();
 }
 
 void loop() {
+  // 0. Kết nối wifi + mqtt
+  checkNetworkConnection();
+
   // 1. Đọc cảm biến + tính vượt ngưỡng + LED GPIO15
   readSensors();
   updateThresholdStates();
