@@ -7,6 +7,8 @@ import './config/mqtt.js';
 import sensorRoutes from './routes/sensorRoutes.js';
 import deviceRoutes from "./routes/deviceRoutes.js";
 import mqttRoutes from "./routes/mqttRoutes.js";
+import projectBotRoutes from './routes/projectBotRoutes.js';
+import predictionRoutes from './routes/predictionRoutes.js';
 
 dotenv.config();
 
@@ -15,7 +17,10 @@ app.use(cors());
 app.use(express.json());
 app.use('/api/sensors', sensorRoutes);
 app.use("/api/device", deviceRoutes);
-app.use("/api/mqtt", mqttRoutes);
+app.use("/api/mqtt", mqttRoutes)
+
+app.use("/api/project-bot", projectBotRoutes);
+app.use("/api/prediction", predictionRoutes);
 
 app.get('/', (req, res) => {
   res.send("Smart IoT API Running!");
