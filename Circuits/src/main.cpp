@@ -1,15 +1,19 @@
-// main.cpp
 #include <Arduino.h>
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+#include <DHT.h>
 #include "globals.h"
 #include "hardware.h"
 #include "sensors.h"
 #include "actuators.h"
 #include "menu.h"
+// ================== ĐỊNH NGHĨA BIẾN TOÀN CỤC ==================
 #include "connect.h"
 // ====== ĐỊNH NGHĨA BIẾN TOÀN CỤC (khớp với extern trong globals.h) ======
 LiquidCrystal_I2C lcd(0x27, 16, 2);
+DHT dht(32, DHTTYPE);
 
-// pin const
+// Pin
 const int MENU_POT_PIN    = 34;
 const int SOIL_PIN        = 35;
 const int BUTTON_PIN      = 2;
@@ -18,10 +22,7 @@ const int RELAY_PUMP_PIN  = 4;
 const int RELAY_LIGHT_PIN = 16;
 const int STATUS_LED_PIN  = 15;
 
-// DHT dùng DHT_PIN
-DHT dht(DHT_PIN, DHTTYPE);
-
-// Menu & mode
+// Mode & menu
 Mode currentMode = MODE_MENU;
 int  selectedIndex = 0;
 
@@ -34,26 +35,31 @@ const char* menuItems[MENU_COUNT] = {
   "May den"
 };
 
-// Ngưỡng
-int minTempThresholdC = 20;
-int maxTempThresholdC = 40;
-int tempThresholdC    = 30;
+// Ngưỡng cho phép (constant)
+const int minTempThresholdC       = 0;
+const int maxTempThresholdC       = 70;
+const int minSoilThresholdPercent = 0;
+const int maxSoilThresholdPercent = 100;
+const int minHumThresholdPercent  = 0;
+const int maxHumThresholdPercent  = 100;
 
-int minSoilThresholdPercent = 0;
-int maxSoilThresholdPercent = 100;
-int soilThresholdPercent    = 50;
+// Ngưỡng đang cấu hình (low/high)
+int tempThresholdLowC  = 20;
+int tempThresholdHighC = 35;
 
-int minHumThresholdPercent = 0;
-int maxHumThresholdPercent = 100;
-int humidThresholdPercent  = 60;
+int soilThresholdLowPercent  = 30;
+int soilThresholdHighPercent = 60;
 
-// Cảm biến hiện tại
+int humidThresholdLowPercent  = 40;
+int humidThresholdHighPercent = 70;
+
+// Sensor values
 float currentTemp     = 0.0f;
 float currentHumidity = 0.0f;
 int   soilRaw         = 0;
 int   soilPercent     = 0;
 
-// Vượt ngưỡng
+// Out-of-range flags
 bool   tempOverThreshold  = false;
 bool   soilOverThreshold  = false;
 bool   humidOverThreshold = false;
@@ -62,11 +68,11 @@ const uint8_t ALERT_TEMP  = 0x01;
 const uint8_t ALERT_SOIL  = 0x02;
 const uint8_t ALERT_HUMID = 0x04;
 
-// Relay trạng thái
+// Relay state
 bool pumpOn  = false;
 bool lightOn = false;
 
-// ====== SETUP & LOOP ======
+// ================== SETUP & LOOP ==================
 void setup() {
   Serial.begin(115200);
   setupHardware();
@@ -75,6 +81,7 @@ void setup() {
 }
 
 void loop() {
+  // 1. Luôn cập nhật sensor + cờ vượt ngưỡng + LED 15
   // 0. Kết nối wifi + mqtt
   checkNetworkConnection();
 
@@ -83,17 +90,17 @@ void loop() {
   updateThresholdStates();
   updateStatusLed();
 
-  // 2. State machine UI
+  // 2. UI state machine
   switch (currentMode) {
     case MODE_MENU:
       updateMenuFromPot();
       updateMenuDisplay();
       if (buttonPressedOnce()) {
-        if      (selectedIndex == 0) currentMode = MODE_TEMP_CONFIG;
-        else if (selectedIndex == 1) currentMode = MODE_SOIL_CONFIG;
-        else if (selectedIndex == 2) currentMode = MODE_HUMID_CONFIG;
-        else if (selectedIndex == 3) currentMode = MODE_PUMP_STATUS;
-        else if (selectedIndex == 4) currentMode = MODE_LIGHT_STATUS;
+        if      (selectedIndex == 0) { startTempConfig();  currentMode = MODE_TEMP_CONFIG; }
+        else if (selectedIndex == 1) { startSoilConfig();  currentMode = MODE_SOIL_CONFIG; }
+        else if (selectedIndex == 2) { startHumidConfig(); currentMode = MODE_HUMID_CONFIG; }
+        else if (selectedIndex == 3) { startPumpStatusScreen();  currentMode = MODE_PUMP_STATUS; }
+        else if (selectedIndex == 4) { startLightStatusScreen(); currentMode = MODE_LIGHT_STATUS; }
       }
       break;
 

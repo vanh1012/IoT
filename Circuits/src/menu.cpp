@@ -1,7 +1,7 @@
-// menu.cpp
+#include <string.h>
 #include "menu.h"
 
-// ===== Custom chars & cache chống nhấp nháy =====
+// ===== CUSTOM CHAR =====
 static byte cursorChar[8] = {
   B00100, B00110, B00111, B00110,
   B00100, B00000, B00000, B00000
@@ -27,6 +27,7 @@ static byte lightChar[8] = {
   B11111, B00100, B00000, B00100
 };
 
+// ===== CACHE MENU (CHỐNG NHÁY) =====
 static char prevLine0[17];
 static char prevLine1[17];
 static int  prevFirstIndex = -1;
@@ -51,20 +52,25 @@ void initMenuRenderState() {
   lcd.clear();
 }
 
-// xây string cho từng mục
+// ========== HIỂN THỊ MENU CHÍNH ==========
 static void buildMenuTextForIndex(int menuIndex, char* buf, size_t bufSize) {
   if (menuIndex == 0) {
-    snprintf(buf, bufSize, "Nhiet:%2.0f(%2d)", currentTemp, tempThresholdC);
+    // Ví dụ: Nhiet:24 20-35
+    snprintf(buf, bufSize, "Nhiet:%2.0f %2d-%2d",
+             currentTemp, tempThresholdLowC, tempThresholdHighC);
   } else if (menuIndex == 1) {
-    snprintf(buf, bufSize, "Dat:%3d(%3d)", soilPercent, soilThresholdPercent);
+    // Dat: 45 30-60
+    snprintf(buf, bufSize, "Dat:%3d %2d-%2d",
+             soilPercent, soilThresholdLowPercent, soilThresholdHighPercent);
   } else if (menuIndex == 2) {
-    snprintf(buf, bufSize, "KK:%3.0f(%3d)", currentHumidity, humidThresholdPercent);
+    // KK: 60 40-70
+    snprintf(buf, bufSize, "KK:%3.0f %2d-%2d",
+             currentHumidity, humidThresholdLowPercent, humidThresholdHighPercent);
   } else {
     snprintf(buf, bufSize, "%s", menuItems[menuIndex]);
   }
 }
 
-// đọc POT → selectedIndex
 void updateMenuFromPot() {
   int potVal = analogRead(MENU_POT_PIN);
   int newIndex = map(potVal, 0, 4095, 0, MENU_COUNT - 1);
@@ -74,7 +80,6 @@ void updateMenuFromPot() {
   }
 }
 
-// vẽ menu nhưng không clear toàn màn hình để tránh nhấp nháy
 void updateMenuDisplay() {
   unsigned long now = millis();
   if (now - lastMenuUpdateMillis < 150) return;
@@ -97,6 +102,7 @@ void updateMenuDisplay() {
   bool need0 = cursorChanged || first  != prevFirstIndex  || strcmp(line0, prevLine0) != 0;
   bool need1 = cursorChanged || second != prevSecondIndex || strcmp(line1, prevLine1) != 0;
 
+  // Dòng 0
   if (need0) {
     lcd.setCursor(0, 0);
     if (selectedIndex == first) lcd.write(byte(0));
@@ -108,14 +114,15 @@ void updateMenuDisplay() {
     lcd.print(line0);
 
     lcd.setCursor(15, 0);
-    if      (first == 3) lcd.write(byte(4));
-    else if (first == 4) lcd.write(byte(5));
+    if      (first == 3) lcd.write(byte(4)); // bơm
+    else if (first == 4) lcd.write(byte(5)); // đèn
     else                 lcd.print(' ');
 
     strcpy(prevLine0, line0);
     prevFirstIndex = first;
   }
 
+  // Dòng 1
   if (need1) {
     lcd.setCursor(0, 1);
     if (selectedIndex == second) lcd.write(byte(0));
@@ -138,98 +145,260 @@ void updateMenuDisplay() {
   prevSelectedIndexForCursor = selectedIndex;
 }
 
-// ==== các màn hình config & status ====
-void handleTempConfig() {
-  static bool drawn = false;
-  if (!drawn) {
+// ========== HỖ TRỢ BÁO LỖI NGƯỠNG ==========
+static void showThresholdError() {
+  for (int i = 0; i < 3; i++) {
     lcd.clear();
     lcd.setCursor(0, 0);
-    lcd.write(byte(1));
-    lcd.print(" Nhiet:");
-    lcd.print(currentTemp, 1);
-    lcd.print((char)223);
-    lcd.print("C");
-    drawn = true;
+    lcd.print("LOI NGUONG");
+    lcd.setCursor(0, 1);
+    lcd.print("Duoi >= Tren");
+    delay(1000);
+
+    lcd.clear();
+    delay(1000);
+  }
+}
+
+// ========== CONFIG NHIỆT ĐỘ (2 BƯỚC) ==========
+static int  tempConfigPhase = 0;     // 0: ngưỡng dưới, 1: ngưỡng trên
+static bool tempConfigInit  = false;
+static int  tempLowCandidate = 20;
+static int  tempHighCandidate = 35;
+
+void startTempConfig() {
+  tempConfigPhase = 0;
+  tempConfigInit  = false;
+}
+
+void handleTempConfig() {
+  if (!tempConfigInit) {
+    lcd.clear();
+    if (tempConfigPhase == 0) {
+      tempLowCandidate = tempThresholdLowC;
+      lcd.setCursor(0, 0);
+      lcd.write(byte(1));
+      lcd.print(" Nhiet do:");
+      lcd.print(currentTemp, 1);
+      lcd.print((char)223);
+      lcd.print("C");
+
+      lcd.setCursor(0, 1);
+      lcd.print("Set NGUONG DUOI");
+    } else {
+      tempHighCandidate = tempThresholdHighC;
+      lcd.setCursor(0, 0);
+      lcd.write(byte(1));
+      lcd.print(" Nhiet do:");
+      lcd.print(currentTemp, 1);
+      lcd.print((char)223);
+      lcd.print("C");
+
+      lcd.setCursor(0, 1);
+      lcd.print("Set NGUONG TREN");
+    }
+    tempConfigInit = true;
   }
 
   int potVal = analogRead(MENU_POT_PIN);
-  int newTh  = map(potVal, 0, 4095, minTempThresholdC, maxTempThresholdC);
-  if (newTh != tempThresholdC) {
-    tempThresholdC = newTh;
-    lcd.setCursor(0, 1);
-    lcd.print("Nguong:");
-    lcd.print(tempThresholdC);
+  int mapped = map(potVal, 0, 4095, minTempThresholdC, maxTempThresholdC);
+
+  lcd.setCursor(0, 1);
+  if (tempConfigPhase == 0) {
+    tempLowCandidate = mapped;
+    lcd.print("Duoi: ");
+    lcd.print(tempLowCandidate);
     lcd.print((char)223);
-    lcd.print("C   ");
+    lcd.print("C    ");
+  } else {
+    tempHighCandidate = mapped;
+    lcd.print("Tren: ");
+    lcd.print(tempHighCandidate);
+    lcd.print((char)223);
+    lcd.print("C    ");
   }
 
   if (buttonPressedOnce()) {
-    drawn = false;
-    enterMenuMode();
+    if (tempConfigPhase == 0) {
+      // xong bước ngưỡng dưới -> qua ngưỡng trên
+      tempConfigPhase = 1;
+      tempConfigInit  = false;
+    } else {
+      // kiểm tra hợp lệ: dưới < trên
+      if (tempLowCandidate < tempHighCandidate) {
+        tempThresholdLowC  = tempLowCandidate;
+        tempThresholdHighC = tempHighCandidate;
+        enterMenuMode();
+      } else {
+        // lỗi -> nhấp nháy 3 lần rồi làm lại từ đầu
+        showThresholdError();
+        tempConfigPhase = 0;
+        tempConfigInit  = false;
+      }
+    }
   }
+}
+
+// ========== CONFIG ĐỘ ẨM ĐẤT ==========
+static int  soilConfigPhase = 0;       // 0: ngưỡng dưới, 1: ngưỡng trên
+static bool soilConfigInit  = false;
+static int  soilLowCandidate  = 30;
+static int  soilHighCandidate = 60;
+
+void startSoilConfig() {
+  soilConfigPhase = 0;
+  soilConfigInit  = false;
 }
 
 void handleSoilConfig() {
-  static bool drawn = false;
-  if (!drawn) {
+  if (!soilConfigInit) {
     lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.write(byte(2));
-    lcd.print(" Dat:");
-    lcd.print(soilPercent);
-    lcd.print("%   ");
-    drawn = true;
+    if (soilConfigPhase == 0) {
+      soilLowCandidate = soilThresholdLowPercent;
+      lcd.setCursor(0, 0);
+      lcd.write(byte(2));
+      lcd.print(" Dat:");
+      lcd.print(soilPercent);
+      lcd.print("%   ");
+
+      lcd.setCursor(0, 1);
+      lcd.print("Set NGUONG DUOI");
+    } else {
+      soilHighCandidate = soilThresholdHighPercent;
+      lcd.setCursor(0, 0);
+      lcd.write(byte(2));
+      lcd.print(" Dat:");
+      lcd.print(soilPercent);
+      lcd.print("%   ");
+
+      lcd.setCursor(0, 1);
+      lcd.print("Set NGUONG TREN");
+    }
+    soilConfigInit = true;
   }
 
   int potVal = analogRead(MENU_POT_PIN);
-  int newTh  = map(potVal, 0, 4095,
+  int mapped = map(potVal, 0, 4095,
                    minSoilThresholdPercent, maxSoilThresholdPercent);
-  if (newTh != soilThresholdPercent) {
-    soilThresholdPercent = newTh;
-    lcd.setCursor(0, 1);
-    lcd.print("Nguong:");
-    lcd.print(soilThresholdPercent);
+
+  lcd.setCursor(0, 1);
+  if (soilConfigPhase == 0) {
+    soilLowCandidate = mapped;
+    lcd.print("Duoi: ");
+    lcd.print(soilLowCandidate);
+    lcd.print("%   ");
+  } else {
+    soilHighCandidate = mapped;
+    lcd.print("Tren: ");
+    lcd.print(soilHighCandidate);
     lcd.print("%   ");
   }
 
   if (buttonPressedOnce()) {
-    drawn = false;
-    enterMenuMode();
+    if (soilConfigPhase == 0) {
+      soilConfigPhase = 1;
+      soilConfigInit  = false;
+    } else {
+      if (soilLowCandidate < soilHighCandidate) {
+        soilThresholdLowPercent  = soilLowCandidate;
+        soilThresholdHighPercent = soilHighCandidate;
+        enterMenuMode();
+      } else {
+        showThresholdError();
+        soilConfigPhase = 0;
+        soilConfigInit  = false;
+      }
+    }
   }
+}
+
+// ========== CONFIG ĐỘ ẨM KHÔNG KHÍ ==========
+static int  humidConfigPhase = 0;       // 0: ngưỡng dưới, 1: ngưỡng trên
+static bool humidConfigInit  = false;
+static int  humidLowCandidate  = 40;
+static int  humidHighCandidate = 70;
+
+void startHumidConfig() {
+  humidConfigPhase = 0;
+  humidConfigInit  = false;
 }
 
 void handleHumidConfig() {
-  static bool drawn = false;
-  if (!drawn) {
+  if (!humidConfigInit) {
     lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.write(byte(3));
-    lcd.print(" KK:");
-    lcd.print(currentHumidity, 1);
-    lcd.print("%   ");
-    drawn = true;
+    if (humidConfigPhase == 0) {
+      humidLowCandidate = humidThresholdLowPercent;
+      lcd.setCursor(0, 0);
+      lcd.write(byte(3));
+      lcd.print(" KK:");
+      lcd.print(currentHumidity, 1);
+      lcd.print("%   ");
+
+      lcd.setCursor(0, 1);
+      lcd.print("Set NGUONG DUOI");
+    } else {
+      humidHighCandidate = humidThresholdHighPercent;
+      lcd.setCursor(0, 0);
+      lcd.write(byte(3));
+      lcd.print(" KK:");
+      lcd.print(currentHumidity, 1);
+      lcd.print("%   ");
+
+      lcd.setCursor(0, 1);
+      lcd.print("Set NGUONG TREN");
+    }
+    humidConfigInit = true;
   }
 
   int potVal = analogRead(MENU_POT_PIN);
-  int newTh  = map(potVal, 0, 4095,
+  int mapped = map(potVal, 0, 4095,
                    minHumThresholdPercent, maxHumThresholdPercent);
-  if (newTh != humidThresholdPercent) {
-    humidThresholdPercent = newTh;
-    lcd.setCursor(0, 1);
-    lcd.print("Nguong:");
-    lcd.print(humidThresholdPercent);
+
+  lcd.setCursor(0, 1);
+  if (humidConfigPhase == 0) {
+    humidLowCandidate = mapped;
+    lcd.print("Duoi: ");
+    lcd.print(humidLowCandidate);
+    lcd.print("%   ");
+  } else {
+    humidHighCandidate = mapped;
+    lcd.print("Tren: ");
+    lcd.print(humidHighCandidate);
     lcd.print("%   ");
   }
 
   if (buttonPressedOnce()) {
-    drawn = false;
-    enterMenuMode();
+    if (humidConfigPhase == 0) {
+      humidConfigPhase = 1;
+      humidConfigInit  = false;
+    } else {
+      if (humidLowCandidate < humidHighCandidate) {
+        humidThresholdLowPercent  = humidLowCandidate;
+        humidThresholdHighPercent = humidHighCandidate;
+        enterMenuMode();
+      } else {
+        showThresholdError();
+        humidConfigPhase = 0;
+        humidConfigInit  = false;
+      }
+    }
   }
 }
 
+// ========== PUMP & LIGHT STATUS ==========
+static bool pumpScreenInit  = false;
+static bool lightScreenInit = false;
+
+void startPumpStatusScreen() {
+  pumpScreenInit = false;
+}
+
+void startLightStatusScreen() {
+  lightScreenInit = false;
+}
+
 void handlePumpStatusScreen() {
-  static bool drawn = false;
-  if (!drawn) {
+  if (!pumpScreenInit) {
     lcd.clear();
     lcd.setCursor(0, 0);
     lcd.write(byte(4));
@@ -237,20 +406,18 @@ void handlePumpStatusScreen() {
     lcd.setCursor(0, 1);
     lcd.print("Trang thai: ");
     lcd.print(pumpOn ? "BAT " : "TAT ");
-    drawn = true;
+    pumpScreenInit = true;
   }
 
   if (buttonPressedOnce()) {
     if (pumpOn) turnPumpOff();
     else        turnPumpOn();
-    drawn = false;
     enterMenuMode();
   }
 }
 
 void handleLightStatusScreen() {
-  static bool drawn = false;
-  if (!drawn) {
+  if (!lightScreenInit) {
     lcd.clear();
     lcd.setCursor(0, 0);
     lcd.write(byte(5));
@@ -258,13 +425,12 @@ void handleLightStatusScreen() {
     lcd.setCursor(0, 1);
     lcd.print("Trang thai: ");
     lcd.print(lightOn ? "BAT " : "TAT ");
-    drawn = true;
+    lightScreenInit = true;
   }
 
   if (buttonPressedOnce()) {
     if (lightOn) turnLightOff();
     else         turnLightOn();
-    drawn = false;
     enterMenuMode();
   }
 }

@@ -1,10 +1,9 @@
-// actuators.cpp
 #include "actuators.h"
 
 void applyPumpState() {
   // Nếu relay active HIGH:
   digitalWrite(RELAY_PUMP_PIN, pumpOn ? HIGH : LOW);
-  // Nếu relay active LOW: đảo lại ở đây
+  // Nếu mạch thực tế active LOW thì đảo lại ở đây
 }
 
 void applyLightState() {
