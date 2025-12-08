@@ -3,14 +3,17 @@
 #include <Arduino.h>
 #include <LiquidCrystal_I2C.h>
 #include <DHT.h>
+#include <WiFi.h>
+#include <PubSubClient.h>
+#include <ArduinoJson.h>
 
 // ====== DHT loại ======
 #define DHTTYPE DHT22
 
-// ====== Khai báo LCD & DHT (định nghĩa ở main.cpp) ======
+// ====== Khai báo LCD , DHT, MQTT (định nghĩa ở main.cpp) ======
 extern LiquidCrystal_I2C lcd;
 extern DHT dht;
-
+extern PubSubClient mqttClient;
 // ====== Chân cứng ======
 extern const int MENU_POT_PIN;
 extern const int SOIL_PIN;
