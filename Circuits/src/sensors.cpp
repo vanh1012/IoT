@@ -40,7 +40,7 @@ void readSensors()
       soilPercent = 0;
     if (soilPercent > 100)
       soilPercent = 100;
-    mqttPublishData();
+    mqttPublishData(sensorTopic);
     }
 
 }
