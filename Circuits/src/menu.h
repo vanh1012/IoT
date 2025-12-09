@@ -27,3 +27,5 @@ void startPumpStatusScreen();
 void startLightStatusScreen();
 void handlePumpStatusScreen();
 void handleLightStatusScreen();
+
+void mqttPublishThreshold();

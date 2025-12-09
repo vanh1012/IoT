@@ -33,6 +33,30 @@ const userSchema = new mongoose.Schema({
   updatedAt: {
     type: Date,
     default: Date.now,
+  },
+  tempThresholdLowC: {
+    type: Number,
+    required: true
+  },
+  tempThresholdHighC: {
+    type: Number,
+    required: true
+  },
+  soilThresholdLowPercent: {
+    type: Number,
+    required: true
+  },
+  soilThresholdHighPercent: {
+    type: Number,
+    required: true
+  },
+  humidThresholdLowPercent: {
+    type: Number,
+    required: true
+  },
+  humidThresholdHighPercent: {
+    type: Number,
+    required: true
   }
 });
 

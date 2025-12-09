@@ -1,5 +1,5 @@
-#include "globals.h"
 #include "actuators.h"
+#include "connect.h"
 
 const char *ssid = "Wokwi-GUEST";
 const char *password = "";
@@ -8,13 +8,6 @@ const char *password = "";
 const char *mqttServer = "broker.hivemq.com";
 int port = 1883;
 PubSubClient mqttClient;
-// Topic IoT23CLC09/Group5/#
-
-// Publish Topic
-const char *topicData = "IoT23CLC09/Group5/data";
-const char *logData = "IoT23CLC09/Group5/log";
-// Subscribe Topc 
-const char *settingsCmd = "IoT23CLC09/Group5/cmd";
 
 WiFiClient wifiClient;
 
@@ -29,7 +22,8 @@ void callback(char *topic, byte *payload, unsigned int length)
     jsonBuffer[length] = '\0';
     Serial.println(jsonBuffer);
 
-    // if (strcmp(topic, "IoT23CLC09/Group5/cmd") == 0)
+    // điều khiển máy bơm, đèn cây, ngưỡng
+    if (strcmp(topic, settingsCmd) == 0)
     {
         StaticJsonDocument<200> doc;
         DeserializationError error = deserializeJson(doc, jsonBuffer);
@@ -43,9 +37,13 @@ void callback(char *topic, byte *payload, unsigned int length)
         {
             pumpOn = doc["pump"].as<bool>();
             if (pumpOn)
+            {
                 turnPumpOn();
+            }
             else 
+            {
                 turnPumpOff();
+            }
             Serial.print("Pump:");
             Serial.println(pumpOn ? "ON" : "OFF");
         }
@@ -127,15 +125,22 @@ void checkNetworkConnection()
     mqttClient.loop();
 }
 
-void mqttPublishData()
+void mqttPublishData(const char *topic)
 {
     JsonDocument doc;
-    doc["soil"] = soilPercent;
-    doc["air"] = currentHumidity;
-    doc["temp"] = currentTemp;
+    if(strcmp(topic,sensorTopic) == 0)
+    {
+        doc["soil"] = soilPercent;
+        doc["air"] = currentHumidity;
+        doc["temp"] = currentTemp;
+    
+        char jsonBuffer[128];
+        serializeJson(doc, jsonBuffer);
+        mqttClient.publish(sensorTopic, jsonBuffer);
+    }
+    if(strcmp(topic, logTopic) == 0)
+    {
 
-    char jsonBuffer[128];
-    serializeJson(doc, jsonBuffer);
-    mqttClient.publish(topicData, jsonBuffer);
+    }
 }
 
