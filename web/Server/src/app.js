@@ -4,8 +4,8 @@ import dotenv from 'dotenv';
 import bcrypt from "bcrypt";
 dotenv.config();
 
-const hash = await bcrypt.hash("123456", 10);
-console.log(hash);
+// const hash = await bcrypt.hash("123456", 10);
+// console.log(hash);
 
 import './config/db.js';
 import './config/mqtt.js';

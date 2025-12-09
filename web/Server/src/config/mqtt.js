@@ -1,57 +1,94 @@
 import mqtt from "mqtt";
 import Sensor from "../models/Sensor.js";
+import User from "../models/User.js"
 import { saveIfChanged } from "../services/sensorService.js";
 
 const client = mqtt.connect("mqtt://broker.hivemq.com", {
   port: 1883,
 });
 
+// subscribe 
 const sensorData = "IoT23CLC09/Group5/sensor";
 const logData = "IoT23CLC09/Group5/log";
 const thresHoldData = "IoT23CLC09/Group5/thres";
+const thresSyncReqTopic = "IoT23CLC09/Group5/thresSyncReq";
+// Publish
+const thresHoldValueTopic = "IoT23CLC09/Group5/thresHoldValue";
+const cmdTopic = "IoT23CLC09/Group5/cmd";
+// ACK
+const thresholdAckTopic = "IoT23CLC09/Group5/thresAck";
 
-client.on("connect", () => {
+let thresholdSent = true;
+
+client.on("connect", async () => {
   console.log("MQTT connected!");
   client.subscribe(sensorData);
   client.subscribe(logData);
   client.subscribe(thresHoldData);
+  client.subscribe(thresholdAckTopic);
+  client.subscribe(thresSyncReqTopic);
+
+  await publishThresholdOnce(); // chỉ gửi 1 lần khi server khởi động
 });
 
 client.on("message", async (topic, message) => {
   try {
-    if (topic === sensorData) {
+    if (topic === sensorData) { // nhận dữ liệu cảm biến 
       const json = JSON.parse(message.toString());
-
-      const data = {
+      await saveIfChanged({
         soilMoisture: json.soil,
         airHumidity: json.air,
         airTemperature: json.temp,
         timestamp: new Date(),
-      };
-
-      await saveIfChanged(data);
+      });
       return;
     }
 
-    if (topic === logData) {
+    if (topic === logData) { // nhận lại hoạt động bật tắt bơm/đèn, chỉnh sửa ngưỡng từ esp32
       console.log("LOG Message:", message.toString());
       return;
     }
 
-    if (topic === thresHoldData) {
-      console.log("Threshold update:", message.toString());
+    if (topic === thresholdAckTopic) { // Confirm rằng Esp32 đã đồng bộ được các biến ngưỡng 
+      console.log("ESP32 confirmed threshold received!");
+      thresholdSent = true;
+      return;
+    }
+
+    if (topic === thresSyncReqTopic) { // Nhận chỉ thỉ đồng bộ biến ngưỡng đến Esp32
+      console.log("📥 ESP32 requested threshold sync");
+      thresholdSent = false;
+      await publishThresholdOnce();
+      return;
+    }
+
+    if (topic === thresHoldData) { // Nhận giá trị biến ngưỡng được cập nhật từ Esp32 
+      const json = JSON.parse(message.toString());
+      console.log("📩 New Threshold received from ESP:", json);
+
+      const user = await User.findOne();
+      if (!user) return;
+
+      user.tempThresholdLowC = json.tempThresholdLowC;
+      user.tempThresholdHighC = json.tempThresholdHighC;
+      user.soilThresholdLowPercent = json.soilThresholdLowPercent;
+      user.soilThresholdHighPercent = json.soilThresholdHighPercent;
+      user.humidThresholdLowPercent = json.humidThresholdLowPercent;
+      user.humidThresholdHighPercent = json.humidThresholdHighPercent;
+
+      await user.save();
+      console.log("💾 Threshold updated in DB");
       return;
     }
 
   } catch (err) {
-    console.error("MQTT message handling error:", err.message);
+    console.error("MQTT error:", err.message);
   }
 });
 
 
-
 export const publishSettings = (settings) => {
-  client.publish("IoT23CLC09/Group5/cmd", JSON.stringify(settings));
+  client.publish(cmdTopic, JSON.stringify(settings));
   console.log("Command sent:", settings);
 };
 
@@ -84,4 +121,29 @@ export const getConnectionStatus = () => {
   };
 };
 
+
+export const publishThresholdOnce = async () => {
+  if (thresholdSent) return;
+
+  const user = await User.findOne();
+  if (!user) return;
+
+  const payload = {
+    tempThresholdLowC: user.tempThresholdLowC,
+    tempThresholdHighC: user.tempThresholdHighC,
+    soilThresholdLowPercent: user.soilThresholdLowPercent,
+    soilThresholdHighPercent: user.soilThresholdHighPercent,
+    humidThresholdLowPercent: user.humidThresholdLowPercent,
+    humidThresholdHighPercent: user.humidThresholdHighPercent
+  };
+  for (const key in payload) {
+    const value = payload[key];
+    if (value === null || value === undefined || isNaN(value)) {
+      console.log(`publishThresholdOnce : Không gửi cập nhật threshold vì thiếu ${key} trong user:`, value);
+      return;
+    }
+  }
+  client.publish(thresHoldValueTopic, JSON.stringify(payload), { qos: 1 });
+  console.log("📤 Sent thresholds →", payload);
+};
 export default client;

@@ -2,11 +2,6 @@ import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 
 const userSchema = new mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    default: () => new mongoose.Types.ObjectId(),
-    unique: true
-  },
   username: {
     type: String,
     required: true,
@@ -26,6 +21,24 @@ const userSchema = new mongoose.Schema({
   },
   pump: { type: Boolean, default: false },
   light: { type: Boolean, default: false },
+  tempThresholdLowC: {
+    type: Number,
+  },
+  tempThresholdHighC: {
+    type: Number
+  },
+  soilThresholdLowPercent: {
+    type: Number
+  },
+  soilThresholdHighPercent: {
+    type: Number
+  },
+  humidThresholdLowPercent: {
+    type: Number
+  },
+  humidThresholdHighPercent: {
+    type: Number
+  },
   createdAt: {
     type: Date,
     default: Date.now,
@@ -33,38 +46,14 @@ const userSchema = new mongoose.Schema({
   updatedAt: {
     type: Date,
     default: Date.now,
-  },
-  tempThresholdLowC: {
-    type: Number,
-    required: true
-  },
-  tempThresholdHighC: {
-    type: Number,
-    required: true
-  },
-  soilThresholdLowPercent: {
-    type: Number,
-    required: true
-  },
-  soilThresholdHighPercent: {
-    type: Number,
-    required: true
-  },
-  humidThresholdLowPercent: {
-    type: Number,
-    required: true
-  },
-  humidThresholdHighPercent: {
-    type: Number,
-    required: true
   }
 });
 
-userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
-  this.password = await bcrypt.hash(this.password, 10);
-  next();
-});
+// userSchema.pre("save", async function (next) {
+//   if (!this.isModified("password")) return next();
+//   this.password = await bcrypt.hash(this.password, 10);
+//   next();
+// });
 
 userSchema.methods.comparePassword = async function (candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);

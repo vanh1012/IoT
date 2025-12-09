@@ -7,12 +7,7 @@ const logSchema = new mongoose.Schema({
     required: true
   },
   message: String,
-  createdAt: { type: Date, default: Date.now },
-  user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true 
-    }
+  createdAt: { type: Date, default: Date.now }
 });
 
 export default mongoose.model("Log", logSchema);

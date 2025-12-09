@@ -2,8 +2,7 @@
 #include "menu.h"
 #include "connect.h"
 #include "globals.h"
-unsigned long lastReadtime = 0;
-
+bool isChange = false;
 // ===== CUSTOM CHAR =====
 static byte cursorChar[8] = {
   B00100, B00110, B00111, B00110,
@@ -231,6 +230,8 @@ void handleTempConfig() {
       if (tempLowCandidate < tempHighCandidate) {
         tempThresholdLowC  = tempLowCandidate;
         tempThresholdHighC = tempHighCandidate;
+        isChange = true;
+        mqttPublishThreshold();
         enterMenuMode();
       } else {
         // lỗi -> nhấp nháy 3 lần rồi làm lại từ đầu
@@ -305,6 +306,8 @@ void handleSoilConfig() {
       if (soilLowCandidate < soilHighCandidate) {
         soilThresholdLowPercent  = soilLowCandidate;
         soilThresholdHighPercent = soilHighCandidate;
+        isChange = true;
+        mqttPublishThreshold();
         enterMenuMode();
       } else {
         showThresholdError();
@@ -378,6 +381,8 @@ void handleHumidConfig() {
       if (humidLowCandidate < humidHighCandidate) {
         humidThresholdLowPercent  = humidLowCandidate;
         humidThresholdHighPercent = humidHighCandidate;
+        isChange = true;
+        mqttPublishThreshold();
         enterMenuMode();
       } else {
         showThresholdError();
@@ -446,8 +451,7 @@ void enterMenuMode() {
 
 void mqttPublishThreshold()
 {
-  unsigned long currentMillis = millis();
-  if (currentMillis - lastReadtime >= 3000)
+  if(isChange)
   {
     JsonDocument doc;
     doc["tempThresholdLowC"] = tempThresholdLowC;
@@ -458,6 +462,7 @@ void mqttPublishThreshold()
     doc["soilThresholdHighPercent"] = soilThresholdHighPercent;
     char jsonBuffer[256];
     serializeJson(doc, jsonBuffer);
-     mqttClient.publish(thresHolTopic, jsonBuffer);
+    mqttClient.publish(thresHolTopic, jsonBuffer, true);
+    isChange = false;
   }
 }

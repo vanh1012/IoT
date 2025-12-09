@@ -7,3 +7,4 @@ const char *thresHolTopic = "IoT23CLC09/Group5/thres";
 
 // Subscribe Topic
 const char *settingsCmd = "IoT23CLC09/Group5/cmd";
+const char *thresHoldValueTopic = "IoT23CLC09/Group5/thresHoldValue";

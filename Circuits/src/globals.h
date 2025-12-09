@@ -85,3 +85,4 @@ extern const char *thresHolTopic;
 
 // Subscribe Topic 
 extern const char *settingsCmd;
+extern const char *thresHoldValueTopic;

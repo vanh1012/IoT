@@ -10,14 +10,13 @@ int port = 1883;
 PubSubClient mqttClient;
 
 WiFiClient wifiClient;
-
-void callback(char *topic, byte *payload, unsigned int length)
+char jsonBuffer[512];
+static void callback(char *topic, byte *payload, unsigned int length)
 {
     Serial.print("📩 MQTT Topic: ");
     Serial.println(topic);
 
     // Convert payload to string
-    char jsonBuffer[150];
     memcpy(jsonBuffer, payload, length);
     jsonBuffer[length] = '\0';
     Serial.println(jsonBuffer);
@@ -59,6 +58,34 @@ void callback(char *topic, byte *payload, unsigned int length)
             Serial.println(lightOn ? "ON" : "OFF");
         }
     }
+    if (strcmp(topic, thresHoldValueTopic) == 0)
+    {
+
+        unsigned int copyLength = (length < sizeof(jsonBuffer) - 1)
+                                      ? length
+                                      : (sizeof(jsonBuffer) - 1);
+        memcpy(jsonBuffer, payload, copyLength);
+        jsonBuffer[copyLength] = '\0';
+
+        ArduinoJson::StaticJsonDocument<300> doc;
+
+        auto err = deserializeJson(doc, jsonBuffer);
+        if (err)
+        {
+            Serial.println("❌ JSON Parse Error in Threshold Topic!");
+            return;
+        }
+
+        tempThresholdLowC = doc["tempThresholdLowC"] | tempThresholdLowC;
+        tempThresholdHighC = doc["tempThresholdHighC"] | tempThresholdHighC;
+        soilThresholdLowPercent = doc["soilThresholdLowPercent"] | soilThresholdLowPercent;
+        soilThresholdHighPercent = doc["soilThresholdHighPercent"] | soilThresholdHighPercent;
+        humidThresholdLowPercent = doc["humidThresholdLowPercent"] | humidThresholdLowPercent;
+        humidThresholdHighPercent = doc["humidThresholdHighPercent"] | humidThresholdHighPercent;
+
+        Serial.println("📌 Updated thresholds from MQTT!");
+        mqttClient.publish("IoT23CLC09/Group5/thresAck", "Ok"); // báo cho server đã đồng hộ thành công ngưỡng từ db
+    }
 }
 
 
@@ -98,7 +125,9 @@ void mqttConnect()
             lcd.clear();
             lcd.print("MQTT OK!");
             delay(1000);
-            mqttClient.subscribe(settingsCmd);
+            mqttClient.subscribe(settingsCmd); // nhận lệnh điều khiển máy bơm 
+            mqttClient.subscribe(thresHoldValueTopic); // nhận biến ngưỡng từ server
+            mqttClient.publish("IoT23CLC09/Group5/thresSyncReq", "1"); // gửi yêu cầu sync ngưỡng khi mới khởi động 
         }
         else
         {
