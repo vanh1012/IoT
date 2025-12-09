@@ -1,5 +1,8 @@
 #include <string.h>
 #include "menu.h"
+#include "connect.h"
+#include "globals.h"
+unsigned long lastReadtime = 0;
 
 // ===== CUSTOM CHAR =====
 static byte cursorChar[8] = {
@@ -438,4 +441,23 @@ void handleLightStatusScreen() {
 void enterMenuMode() {
   currentMode = MODE_MENU;
   initMenuRenderState();
+}
+
+
+void mqttPublishThreshold()
+{
+  unsigned long currentMillis = millis();
+  if (currentMillis - lastReadtime >= 3000)
+  {
+    JsonDocument doc;
+    doc["tempThresholdLowC"] = tempThresholdLowC;
+    doc["tempThresholdHighC"] = tempThresholdHighC;
+    doc["humidThresholdLowPercent"]  = humidThresholdLowPercent;
+    doc["humidThresholdHighPercent"] = humidThresholdHighPercent;
+    doc["soilThresholdLowPercent"] = soilThresholdLowPercent;
+    doc["soilThresholdHighPercent"] = soilThresholdHighPercent;
+    char jsonBuffer[256];
+    serializeJson(doc, jsonBuffer);
+     mqttClient.publish(thresHolTopic, jsonBuffer);
+  }
 }

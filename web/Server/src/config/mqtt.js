@@ -6,34 +6,48 @@ const client = mqtt.connect("mqtt://broker.hivemq.com", {
   port: 1883,
 });
 
+const sensorData = "IoT23CLC09/Group5/sensor";
+const logData = "IoT23CLC09/Group5/log";
+const thresHoldData = "IoT23CLC09/Group5/thres";
+
 client.on("connect", () => {
   console.log("MQTT connected!");
-  client.subscribe("IoT23CLC09/Group5/data");
+  client.subscribe(sensorData);
+  client.subscribe(logData);
+  client.subscribe(thresHoldData);
 });
 
 client.on("message", async (topic, message) => {
   try {
-    const json = JSON.parse(message.toString());
+    if (topic === sensorData) {
+      const json = JSON.parse(message.toString());
 
-    const data = {
-      soilMoisture: json.soil,
-      airHumidity: json.air,
-      airTemperature: json.temp,
-      timestamp: new Date(),
-    };
+      const data = {
+        soilMoisture: json.soil,
+        airHumidity: json.air,
+        airTemperature: json.temp,
+        timestamp: new Date(),
+      };
 
-    const result = await saveIfChanged(data);
+      await saveIfChanged(data);
+      return; 
+    }
 
-    // if (result) {
-    //   console.log("📥 New sensor data saved:", result);
-    // } else {
-    //   console.log("⚠️ Data is same as latest → skipped");
-    // }
+    if (topic === logData) {
+      console.log("LOG Message:", message.toString());
+      return;
+    }
+
+    if (topic === thresHoldData) {
+      console.log("Threshold update:", message.toString());
+      return;
+    }
 
   } catch (err) {
-    console.error("MQTT parse/save error:", err.message);
+    console.error("MQTT message handling error:", err.message);
   }
 });
+
 
 
 export const publishSettings = (settings) => {
