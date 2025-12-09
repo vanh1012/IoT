@@ -4,6 +4,22 @@ import { Card } from "./ui/card"
 import { AlertCircle } from "lucide-react"
 
 export function EnvironmentThresholds({ thresholds, onThresholdChange }) {
+
+    // Helper: safely update a min/max pair
+    const updatePair = (keyMin, keyMax, newValue, isMin) => {
+        let min = thresholds[keyMin];
+        let max = thresholds[keyMax];
+
+        if (isMin) {
+            min = Math.min(newValue, max - 1); // min < max
+        } else {
+            max = Math.max(newValue, min + 1); // max > min
+        }
+
+        onThresholdChange(keyMin, min);
+        onThresholdChange(keyMax, max);
+    };
+
     return (
         <Card className="bg-white shadow-lg border-0 p-6 md:p-8">
             <div className="mb-6">
@@ -19,105 +35,131 @@ export function EnvironmentThresholds({ thresholds, onThresholdChange }) {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* Moisture Section */}
+
+                {/* -------- MOISTURE -------- */}
                 <div className="space-y-4">
                     <h3 className="text-lg font-semibold text-gray-900">Độ Ẩm Đất (%)</h3>
 
+                    {/* Min */}
                     <div>
                         <div className="flex justify-between mb-2">
                             <label className="text-sm font-semibold text-gray-700">Tối Thiểu</label>
                             <span className="text-lg font-bold text-gray-900">{thresholds.moistureMin}%</span>
                         </div>
+
                         <input
                             type="range"
                             min="0"
                             max="100"
                             value={thresholds.moistureMin}
-                            onChange={(e) => onThresholdChange("moistureMin", Number.parseInt(e.target.value))}
+                            onChange={(e) =>
+                                updatePair("moistureMin", "moistureMax", Number(e.target.value), true)
+                            }
                             className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-emerald-600"
                         />
                     </div>
 
+                    {/* Max */}
                     <div>
                         <div className="flex justify-between mb-2">
                             <label className="text-sm font-semibold text-gray-700">Tối Đa</label>
                             <span className="text-lg font-bold text-gray-900">{thresholds.moistureMax}%</span>
                         </div>
+
                         <input
                             type="range"
                             min="0"
                             max="100"
                             value={thresholds.moistureMax}
-                            onChange={(e) => onThresholdChange("moistureMax", Number.parseInt(e.target.value))}
+                            onChange={(e) =>
+                                updatePair("moistureMin", "moistureMax", Number(e.target.value), false)
+                            }
                             className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-emerald-600"
                         />
                     </div>
                 </div>
 
-                {/* Temperature Section */}
+                {/* -------- TEMPERATURE -------- */}
                 <div className="space-y-4">
                     <h3 className="text-lg font-semibold text-gray-900">Nhiệt Độ (°C)</h3>
 
+                    {/* Min */}
                     <div>
                         <div className="flex justify-between mb-2">
                             <label className="text-sm font-semibold text-gray-700">Tối Thiểu</label>
                             <span className="text-lg font-bold text-gray-900">{thresholds.temperatureMin}°C</span>
                         </div>
+
                         <input
                             type="range"
                             min="0"
                             max="40"
                             value={thresholds.temperatureMin}
-                            onChange={(e) => onThresholdChange("temperatureMin", Number.parseInt(e.target.value))}
+                            onChange={(e) =>
+                                updatePair("temperatureMin", "temperatureMax", Number(e.target.value), true)
+                            }
                             className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-orange-600"
                         />
                     </div>
 
+                    {/* Max */}
                     <div>
                         <div className="flex justify-between mb-2">
                             <label className="text-sm font-semibold text-gray-700">Tối Đa</label>
                             <span className="text-lg font-bold text-gray-900">{thresholds.temperatureMax}°C</span>
                         </div>
+
                         <input
                             type="range"
                             min="0"
                             max="40"
                             value={thresholds.temperatureMax}
-                            onChange={(e) => onThresholdChange("temperatureMax", Number.parseInt(e.target.value))}
+                            onChange={(e) =>
+                                updatePair("temperatureMin", "temperatureMax", Number(e.target.value), false)
+                            }
                             className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-orange-600"
                         />
                     </div>
                 </div>
 
+                {/* -------- HUMIDITY -------- */}
                 <div className="space-y-4">
                     <h3 className="text-lg font-semibold text-gray-900">Độ Ẩm Không Khí (%)</h3>
 
+                    {/* Min */}
                     <div>
                         <div className="flex justify-between mb-2">
                             <label className="text-sm font-semibold text-gray-700">Tối Thiểu</label>
                             <span className="text-lg font-bold text-gray-900">{thresholds.humidityMin}%</span>
                         </div>
+
                         <input
                             type="range"
                             min="0"
                             max="100"
                             value={thresholds.humidityMin}
-                            onChange={(e) => onThresholdChange("humidityMin", Number.parseInt(e.target.value))}
+                            onChange={(e) =>
+                                updatePair("humidityMin", "humidityMax", Number(e.target.value), true)
+                            }
                             className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-cyan-600"
                         />
                     </div>
 
+                    {/* Max */}
                     <div>
                         <div className="flex justify-between mb-2">
                             <label className="text-sm font-semibold text-gray-700">Tối Đa</label>
                             <span className="text-lg font-bold text-gray-900">{thresholds.humidityMax}%</span>
                         </div>
+
                         <input
                             type="range"
                             min="0"
                             max="100"
                             value={thresholds.humidityMax}
-                            onChange={(e) => onThresholdChange("humidityMax", Number.parseInt(e.target.value))}
+                            onChange={(e) =>
+                                updatePair("humidityMin", "humidityMax", Number(e.target.value), false)
+                            }
                             className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-cyan-600"
                         />
                     </div>
@@ -127,8 +169,7 @@ export function EnvironmentThresholds({ thresholds, onThresholdChange }) {
             {/* Info Box */}
             <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <p className="text-sm text-blue-700">
-                    <strong>Mẹo:</strong> Hệ thống sẽ tự động bật máy bơm khi độ ẩm dưới ngưỡng tối thiểu và gửi thông báo khi
-                    vượt ngưỡng.
+                    <strong>Mẹo:</strong> Hệ thống sẽ tự động bật máy bơm khi độ ẩm dưới ngưỡng tối thiểu và gửi thông báo khi vượt ngưỡng.
                 </p>
             </div>
         </Card>

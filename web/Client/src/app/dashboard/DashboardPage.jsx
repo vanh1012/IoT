@@ -35,8 +35,12 @@ export default function DashboardPage() {
     const [thresholds, setThresholds] = useState({
         moistureMin: 40,
         moistureMax: 80,
+
         temperatureMin: 18,
         temperatureMax: 28,
+
+        humidityMin: 40,   // 👈 THÊM
+        humidityMax: 70,   // 👈 THÊM
     });
 
     const [schedules, setSchedules] = useState([

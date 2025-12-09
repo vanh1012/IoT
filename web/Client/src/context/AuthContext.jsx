@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect } from "react";
 
 const AuthContext = createContext(null);
 
-const API_URL = "http://localhost:5000";
+const API_URL = "http://localhost:3000";
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -41,6 +41,10 @@ export function AuthProvider({ children }) {
     checkAuth();
   }, []);
 
+  useEffect(() => {
+    if (token) localStorage.setItem("token", token);
+    else localStorage.removeItem("token");
+  }, [token]);
   const login = async (email, password) => {
     const response = await fetch(`${API_URL}/api/auth/login`, {
       method: "POST",
@@ -63,27 +67,6 @@ export function AuthProvider({ children }) {
     return data;
   };
 
-  const register = async (name, email, password) => {
-    const response = await fetch(`${API_URL}/api/auth/register`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ name, email, password }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || "Registration failed");
-    }
-
-    localStorage.setItem("token", data.token);
-    setToken(data.token);
-    setUser(data.user);
-
-    return data;
-  };
 
   const logout = () => {
     localStorage.removeItem("token");
@@ -96,7 +79,6 @@ export function AuthProvider({ children }) {
     token,
     loading,
     login,
-    register,
     logout,
     isAuthenticated: !!token,
   };

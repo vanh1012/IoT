@@ -17,7 +17,6 @@ export function AutomaticSchedules({ schedules, onAddSchedule }) {
         onAddSchedule({
             ...formData,
             id: Date.now().toString(),
-            enabled: true,
         })
         setFormData({ device: "Watering", time: "12:00", duration: 10 })
         setShowForm(false)
@@ -52,7 +51,6 @@ export function AutomaticSchedules({ schedules, onAddSchedule }) {
                             className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                         >
                             <div className="flex items-center gap-4 flex-1">
-                                <input type="checkbox" checked={schedule.enabled} className="w-5 h-5 cursor-pointer" readOnly />
                                 <div className="flex-1">
                                     <p className="font-semibold text-gray-900">{schedule.device}</p>
                                     <p className="text-sm text-gray-500">
