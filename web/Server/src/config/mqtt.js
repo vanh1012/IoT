@@ -2,7 +2,7 @@ import mqtt from "mqtt";
 import Sensor from "../models/Sensor.js";
 import User from "../models/User.js"
 import { saveIfChanged } from "../services/sensorService.js";
-
+import { sendAlertEmail } from "../services/alertService.js"
 const client = mqtt.connect("mqtt://broker.hivemq.com", {
   port: 1883,
 });
@@ -33,16 +33,50 @@ client.on("connect", async () => {
 
 client.on("message", async (topic, message) => {
   try {
-    if (topic === sensorData) { // nhận dữ liệu cảm biến 
+    if (topic === sensorData) { // nhận dữ liệu cảm biết
       const json = JSON.parse(message.toString());
-      await saveIfChanged({
+
+      const changed = await saveIfChanged({
         soilMoisture: json.soil,
         airHumidity: json.air,
         airTemperature: json.temp,
         timestamp: new Date(),
       });
+
+      //  Nếu không thay đổi không cần check ngưỡng, không email
+      if (!changed) {
+        // console.log("No sensor value changed → skip alert check");
+        return;
+      }
+
+      // Lấy ngưỡng
+      const user = await User.findOne();
+      if (!user) return;
+
+      let alerts = [];
+
+      // Check ngưỡng
+      if (json.temp < user.tempThresholdLowC || json.temp > user.tempThresholdHighC) {
+        alerts.push(`⚠️ Temperature out of range: ${json.temp}°C`);
+      }
+
+      if (json.air < user.humidThresholdLowPercent || json.air > user.humidThresholdHighPercent) {
+        alerts.push(`⚠️ Humidity out of range: ${json.air}%`);
+      }
+
+      if (json.soil < user.soilThresholdLowPercent || json.soil > user.soilThresholdHighPercent) {
+        alerts.push(`⚠️ Soil moisture out of range: ${json.soil}%`);
+      }
+
+      // Nếu không lỗi → return
+      if (alerts.length === 0) return;
+
+      // Gửi email
+      await sendAlertEmail(user.email, "⚠️ IoT Alert", alerts.join("\n"));
+      console.log("📩 Alert email sent (value changed)");
       return;
     }
+
 
     if (topic === logData) { // nhận lại hoạt động bật tắt bơm/đèn, chỉnh sửa ngưỡng từ esp32
       console.log("LOG Message:", message.toString());
@@ -100,7 +134,6 @@ export const publishMessage = (topic, payload) => {
     }
 
     const jsonPayload = typeof payload === "string" ? payload : JSON.stringify(payload);
-
     client.publish(topic, jsonPayload, { qos: 1 }, (err) => {
       if (err) {
         console.error("MQTT publish error:", err.message);

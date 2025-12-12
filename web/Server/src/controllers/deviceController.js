@@ -1,13 +1,9 @@
 import User from "../models/User.js";
 import { controlDeviceService } from "../services/deviceService.js";
-
+import { sendAlertEmail } from "../services/alertService.js";
 export const controlDevice = async (req, res) => {
   try {
     const { type, state } = req.body;
-    console.log(type, state);
-    const userId = req.userId; // bạn lấy từ JWT middleware
-    console.log(userId);
-    // Validate input
     if (!type || typeof state !== "boolean") {
       return res.status(400).json({ message: "Invalid input: type, state required" });
     }
@@ -23,7 +19,6 @@ export const controlDevice = async (req, res) => {
 
     // Update user
     const updatedUser = await User.findOneAndUpdate(
-      { userId },
       updateObj,
       { new: true }
     );
@@ -32,10 +27,21 @@ export const controlDevice = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    // -------- Gửi MQTT lệnh điều khiển -------
     try {
       await controlDeviceService(type, state);
     } catch (err) {
       console.log("MQTT send failed:", err.message);
+    }
+    // -------- Gửi email cảnh báo -------
+    try {
+      const subject = `⚠️ Device ${type} was ${state ? "turned ON" : "turned OFF"}`;
+      const text = `The device "${type}" has been ${state ? "activated" : "deactivated"}.\n\nTime: ${new Date().toLocaleString()}`;
+
+      await sendAlertEmail(updatedUser.email, subject, text);
+      // console.log("📩 Email sent for device control");
+    } catch (err) {
+      console.log("Email send failed:", err.message);
     }
 
     res.json({

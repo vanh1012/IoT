@@ -12,7 +12,7 @@ import './config/mqtt.js';
 import sensorRoutes from './routes/sensorRoutes.js';
 import deviceRoutes from "./routes/deviceRoutes.js";
 import mqttRoutes from "./routes/mqttRoutes.js";
-
+import getToures from "./routes/getRoutes.js";
 import authRoutes   from "./routes/authRoutes.js";
 import scheduleRoutes from "./routes/scheduleRoutes.js"
 
@@ -24,6 +24,7 @@ app.use("/api/device", deviceRoutes);
 app.use("/api/mqtt", mqttRoutes)
 app.use("/api/auth", authRoutes);
 app.use("/api/schedule", scheduleRoutes);
+app.use("/api/", getToures);
 
 app.get('/', (req, res) => {
   res.send("Smart IoT API Running!");
