@@ -1,8 +1,8 @@
 import express from "express";
-import { controlDevice, updateThresholds } from "../controllers/deviceController.js";
+import { controlDevice, updateThreshold } from "../controllers/deviceController.js";
 
 const router = express.Router();
 
 router.post("/control", controlDevice);
-router.post("/threshold", updateThresholds)
+router.post("/threshold", updateThreshold)
 export default router;

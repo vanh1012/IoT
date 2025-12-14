@@ -1,6 +1,8 @@
 import User from "../models/User.js";
 import { controlDeviceService } from "../services/deviceService.js";
 import { sendAlertEmail } from "../services/alertService.js";
+import { publishMessage } from "../config/mqtt.js"
+
 export const controlDevice = async (req, res) => {
   try {
     const { type, state } = req.body;
@@ -59,62 +61,55 @@ export const controlDevice = async (req, res) => {
   }
 };
 
-export const updateThresholds = async (req, res) => {
+export const updateThreshold = async (req, res) => {
   try {
-    const userId = req.userId;
-    const {
-      tempThresholdLowC,
-      tempThresholdHighC,
-      soilThresholdLowPercent,
-      soilThresholdHighPercent,
-      humidThresholdLowPercent,
-      humidThresholdHighPercent
-    } = req.body;
+    const { temp, humid, soil } = req.body;
 
-    // Validate đủ 6 giá trị
-    if (
-      tempThresholdLowC == null ||
-      tempThresholdHighC == null ||
-      soilThresholdLowPercent == null ||
-      soilThresholdHighPercent == null ||
-      humidThresholdLowPercent == null ||
-      humidThresholdHighPercent == null
-    ) {
-      return res.status(400).json({ message: "Missing threshold values" });
-    }
-
-    // Update DB
-    const updatedUser = await User.findOneAndUpdate(
-      { userId },
-      {
-        tempThresholdLowC,
-        tempThresholdHighC,
-        soilThresholdLowPercent,
-        soilThresholdHighPercent,
-        humidThresholdLowPercent,
-        humidThresholdHighPercent,
-        updatedAt: Date.now()
-      },
-      { new: true }
-    );
-
-    if (!updatedUser) {
+    const user = await User.findOne();
+    if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
+    // Update DB theo từng cặp
+    if (temp) {
+      user.tempThresholdLowC = temp.low;
+      user.tempThresholdHighC = temp.high;
+    }
+
+    if (humid) {
+      user.humidThresholdLowPercent = humid.low;
+      user.humidThresholdHighPercent = humid.high;
+    }
+
+    if (soil) {
+      user.soilThresholdLowPercent = soil.low;
+      user.soilThresholdHighPercent = soil.high;
+    }
+
+    await user.save();
+
+    //  payload cho ESP32 
+    const payload = {
+      tempThresholdLowC: user.tempThresholdLowC,
+      tempThresholdHighC: user.tempThresholdHighC,
+      humidThresholdLowPercent: user.humidThresholdLowPercent,
+      humidThresholdHighPercent: user.humidThresholdHighPercent,
+      soilThresholdLowPercent: user.soilThresholdLowPercent,
+      soilThresholdHighPercent: user.soilThresholdHighPercent
+    };
+
+    await publishMessage(
+      "IoT23CLC09/Group5/thresHoldValue",
+      payload
+    );
+
     res.json({
-      message: "Thresholds updated successfully",
-      thresholds: {
-        tempThresholdLowC: updatedUser.tempThresholdLowC,
-        tempThresholdHighC: updatedUser.tempThresholdHighC,
-        soilThresholdLowPercent: updatedUser.soilThresholdLowPercent,
-        soilThresholdHighPercent: updatedUser.soilThresholdHighPercent,
-        humidThresholdLowPercent: updatedUser.humidThresholdLowPercent,
-        humidThresholdHighPercent: updatedUser.humidThresholdHighPercent
-      }
+      success: true,
+      message: "Threshold updated & synced to ESP32",
+      data: payload
     });
 
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ message: err.message });
   }
 };

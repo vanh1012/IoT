@@ -84,6 +84,7 @@ static void callback(char *topic, byte *payload, unsigned int length)
         humidThresholdHighPercent = doc["humidThresholdHighPercent"] | humidThresholdHighPercent;
 
         Serial.println("📌 Updated thresholds from MQTT!");
+        mqttClient.publish(thresHolTopic, jsonBuffer, true);
         mqttClient.publish("IoT23CLC09/Group5/thresAck", "Ok"); // báo cho server đã đồng hộ thành công ngưỡng từ db
     }
 }
