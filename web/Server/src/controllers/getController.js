@@ -1,89 +1,99 @@
-import User from '../models/User.js';
-
-export const getTemp = async (req, res) => {
+import Log from '../models/Log.js';
+import Sensor from '../models/Sensor.js'
+export const getLogs = async (req, res) => {
   try {
-    const user = await User.findOne();
+    const logs = await Log.find()
+      .sort({ createdAt: -1 });
 
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-        data: {}
-      });
-    }
-
-    return res.status(200).json({
+    res.json({
       success: true,
-      message: "Temperature data retrieved",
-      data: {
-        low: user.tempThresholdLowC,
-        high: user.tempThresholdHighC
-      }
+      count: logs.length,
+      data: logs
     });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Server error",
-      data: {}
-    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };
 
 
-export const getHumid = async (req, res) => {
+export const getSensorChart24h = async (req, res) => {
   try {
-    const user = await User.findOne();
+    const now = new Date();
+    const startTime = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-        data: {}
-      });
+    const history = await Sensor.aggregate([
+      {
+        $match: {
+          timestamp: { $gte: startTime }
+        }
+      },
+      {
+        $project: {
+          hour: {
+            $dateTrunc: {
+              date: "$timestamp",
+              unit: "hour"
+            }
+          },
+          airTemperature: 1,
+          airHumidity: 1,
+          soilMoisture: 1
+        }
+      },
+      {
+        $sort: { timestamp: 1 }
+      },
+      {
+        $group: {
+          _id: "$hour",
+          temp: { $last: "$airTemperature" },
+          humid: { $last: "$airHumidity" },
+          soil: { $last: "$soilMoisture" }
+        }
+      },
+      {
+        $sort: { _id: 1 }
+      }
+    ]);
+
+    const map = {};
+    history.forEach(item => {
+      map[item._id.toISOString()] = item;
+    });
+
+    const data = [];
+
+    for (let i = 23; i >= 0; i--) {
+      const hour = new Date(now.getTime() - i * 60 * 60 * 1000);
+      hour.setMinutes(0, 0, 0);
+
+      const key = hour.toISOString();
+
+      if (map[key]) {
+        data.push({
+          hour,
+          temp: map[key].temp,
+          humid: map[key].humid,
+          soil: map[key].soil
+        });
+      } else {
+        data.push({
+          hour,
+          temp: null,
+          humid: null,
+          soil: null
+        });
+      }
     }
 
-    return res.status(200).json({
+    res.json({
       success: true,
-      message: "Humidity data retrieved",
-      data: {
-        low: user.humidThresholdLowPercent,
-        high: user.humidThresholdHighPercent
-      }
+      range: "last_24_hours",
+      interval: "1_hour",
+      data
     });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Server error",
-      data: {}
-    });
-  }
-};
 
-export const getSoil = async (req, res) => {
-  try {
-    const user = await User.findOne();
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-        data: {}
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: "Soil moisture data retrieved",
-      data: {
-        low: user.soilThresholdLowPercent,
-        high: user.soilThresholdHighPercent
-      }
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Server error",
-      data: {}
-    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };

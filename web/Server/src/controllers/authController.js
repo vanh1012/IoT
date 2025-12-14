@@ -133,7 +133,13 @@ export const getMe = async (req, res) => {
           username: user.username,
           email: user.email,
           pump: user.pump,
-          light: user.light
+          light: user.light,
+          humidThresholdHighPercent : user?.humidThresholdHighPercent,
+          humidThresholdLowPercent : user ?.humidThresholdLowPercent,
+          soilThresholdHighPercent : user?.soilThresholdHighPercent,
+          soilThresholdLowPercent : user?.soilThresholdLowPercent,
+          tempThresholdHighC : user?.tempThresholdHighC,
+          tempThresholdLowC : user?.tempThresholdLowC
         }
       }
     });

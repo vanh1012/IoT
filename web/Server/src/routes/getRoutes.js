@@ -1,10 +1,9 @@
 import express from "express";
-import { getHumid, getSoil, getTemp } from "../controllers/getController.js";
+import { getLogs, getSensorChart24h } from "../controllers/getController.js";
 
 const router = express.Router();
 
-router.get('/humidthreshold', getHumid);
-router.get('/soilthreshold', getSoil);
-router.get('/tempthreshold', getTemp);
+router.get("/logs", getLogs);
+router.get("/chart", getSensorChart24h);
 
 export default router;
