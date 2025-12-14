@@ -2,10 +2,9 @@ import mqtt from "mqtt";
 import Sensor from "../models/Sensor.js";
 import User from "../models/User.js"
 import { saveIfChanged } from "../services/sensorService.js";
-import { sendAlertEmail } from "../services/alertService.js"
-const client = mqtt.connect("mqtt://broker.hivemq.com", {
-  port: 1883,
-});
+import { sendAlertEmail, checkThresholdAndAlert } from "../services/alertService.js"
+
+let client = null;
 
 // subscribe 
 const sensorData = "IoT23CLC09/Group5/sensor";
@@ -20,115 +19,98 @@ const thresholdAckTopic = "IoT23CLC09/Group5/thresAck";
 
 let thresholdSent = true;
 
-client.on("connect", async () => {
-  console.log("MQTT connected!");
-  client.subscribe(sensorData);
-  client.subscribe(logData);
-  client.subscribe(thresHoldData);
-  client.subscribe(thresholdAckTopic);
-  client.subscribe(thresSyncReqTopic);
+export const startMQTT = () => {
+  if (client) return client;
 
-  await publishThresholdOnce(); // chỉ gửi 1 lần khi server khởi động
-});
+  client = mqtt.connect("mqtt://broker.hivemq.com", {
+    port: 1883,
+  });
 
-client.on("message", async (topic, message) => {
-  try {
-    if (topic === sensorData) { // nhận dữ liệu cảm biết
-      const json = JSON.parse(message.toString());
+  client.on("connect", async () => {
+    console.log("MQTT connected!");
+    client.subscribe(sensorData);
+    client.subscribe(logData);
+    client.subscribe(thresHoldData);
+    client.subscribe(thresholdAckTopic);
+    client.subscribe(thresSyncReqTopic);
 
-      const changed = await saveIfChanged({
-        soilMoisture: json.soil,
-        airHumidity: json.air,
-        airTemperature: json.temp,
-        timestamp: new Date(),
-      });
+    await publishThresholdOnce(); // chỉ gửi 1 lần khi server khởi động
+  });
 
-      //  Nếu không thay đổi không cần check ngưỡng, không email
-      if (!changed) {
-        // console.log("No sensor value changed → skip alert check");
+  client.on("message", async (topic, message) => {
+    try {
+      if (topic === sensorData) { // nhận dữ liệu cảm biết
+        const json = JSON.parse(message.toString());
+
+        await saveIfChanged({
+          soilMoisture: json.soil,
+          airHumidity: json.air,
+          airTemperature: json.temp,
+          timestamp: new Date(),
+        });
+
+        await checkThresholdAndAlert({
+          temp: json.temp,
+          humid: json.air,
+          soil: json.soil
+        });
         return;
       }
 
-      // Lấy ngưỡng
-      const user = await User.findOne();
-      if (!user) return;
-
-      let alerts = [];
-
-      // Check ngưỡng
-      if (json.temp < user.tempThresholdLowC || json.temp > user.tempThresholdHighC) {
-        alerts.push(`⚠️ Temperature out of range: ${json.temp}°C`);
+      if (topic === logData) { // nhận lại hoạt động bật tắt bơm/đèn, chỉnh sửa ngưỡng từ esp32
+        console.log("LOG Message:", message.toString());
+        return;
       }
 
-      if (json.air < user.humidThresholdLowPercent || json.air > user.humidThresholdHighPercent) {
-        alerts.push(`⚠️ Humidity out of range: ${json.air}%`);
+      if (topic === thresholdAckTopic) { // Confirm rằng Esp32 đã đồng bộ được các biến ngưỡng 
+        console.log("ESP32 confirmed threshold received!");
+        thresholdSent = true;
+        return;
       }
 
-      if (json.soil < user.soilThresholdLowPercent || json.soil > user.soilThresholdHighPercent) {
-        alerts.push(`⚠️ Soil moisture out of range: ${json.soil}%`);
+      if (topic === thresSyncReqTopic) { // Nhận chỉ thỉ đồng bộ biến ngưỡng đến Esp32
+        console.log("📥 ESP32 requested threshold sync");
+        thresholdSent = false;
+        await publishThresholdOnce();
+        return;
       }
 
-      // Nếu không lỗi → return
-      if (alerts.length === 0) return;
+      if (topic === thresHoldData) { // Nhận giá trị biến ngưỡng được cập nhật từ Esp32 
+        const json = JSON.parse(message.toString());
+        console.log("📩 New Threshold received from ESP:", json);
 
-      // Gửi email
-      await sendAlertEmail(user.email, "⚠️ IoT Alert", alerts.join("\n"));
-      console.log("📩 Alert email sent (value changed)");
-      return;
+        const user = await User.findOne();
+        if (!user) return;
+
+        user.tempThresholdLowC = json.tempThresholdLowC;
+        user.tempThresholdHighC = json.tempThresholdHighC;
+        user.soilThresholdLowPercent = json.soilThresholdLowPercent;
+        user.soilThresholdHighPercent = json.soilThresholdHighPercent;
+        user.humidThresholdLowPercent = json.humidThresholdLowPercent;
+        user.humidThresholdHighPercent = json.humidThresholdHighPercent;
+
+        await user.save();
+        console.log("💾 Threshold updated in DB");
+        return;
+      }
+
+    } catch (err) {
+      console.error("MQTT error:", err.message);
     }
+  });
 
-
-    if (topic === logData) { // nhận lại hoạt động bật tắt bơm/đèn, chỉnh sửa ngưỡng từ esp32
-      console.log("LOG Message:", message.toString());
-      return;
-    }
-
-    if (topic === thresholdAckTopic) { // Confirm rằng Esp32 đã đồng bộ được các biến ngưỡng 
-      console.log("ESP32 confirmed threshold received!");
-      thresholdSent = true;
-      return;
-    }
-
-    if (topic === thresSyncReqTopic) { // Nhận chỉ thỉ đồng bộ biến ngưỡng đến Esp32
-      console.log("📥 ESP32 requested threshold sync");
-      thresholdSent = false;
-      await publishThresholdOnce();
-      return;
-    }
-
-    if (topic === thresHoldData) { // Nhận giá trị biến ngưỡng được cập nhật từ Esp32 
-      const json = JSON.parse(message.toString());
-      console.log("📩 New Threshold received from ESP:", json);
-
-      const user = await User.findOne();
-      if (!user) return;
-
-      user.tempThresholdLowC = json.tempThresholdLowC;
-      user.tempThresholdHighC = json.tempThresholdHighC;
-      user.soilThresholdLowPercent = json.soilThresholdLowPercent;
-      user.soilThresholdHighPercent = json.soilThresholdHighPercent;
-      user.humidThresholdLowPercent = json.humidThresholdLowPercent;
-      user.humidThresholdHighPercent = json.humidThresholdHighPercent;
-
-      await user.save();
-      console.log("💾 Threshold updated in DB");
-      return;
-    }
-
-  } catch (err) {
-    console.error("MQTT error:", err.message);
-  }
-});
-
+  return client;
+};
 
 export const publishSettings = (settings) => {
+  if (!client || !client.connected) return;
   client.publish(cmdTopic, JSON.stringify(settings));
   console.log("Command sent:", settings);
 };
 
 export const publishMessage = (topic, payload) => {
   return new Promise((resolve, reject) => {
-    if (!client.connected) {
+    if (!client || !client.connected) {
       reject(new Error("MQTT client is not connected"));
       return;
     }
@@ -148,15 +130,15 @@ export const publishMessage = (topic, payload) => {
 
 export const getConnectionStatus = () => {
   return {
-    connected: client.connected,
+    connected: client ? client.connected : false,
     broker: "broker.hivemq.com",
     port: 1883
   };
 };
 
-
 export const publishThresholdOnce = async () => {
   if (thresholdSent) return;
+  if (!client || !client.connected) return;
 
   const user = await User.findOne();
   if (!user) return;
@@ -169,6 +151,7 @@ export const publishThresholdOnce = async () => {
     humidThresholdLowPercent: user.humidThresholdLowPercent,
     humidThresholdHighPercent: user.humidThresholdHighPercent
   };
+
   for (const key in payload) {
     const value = payload[key];
     if (value === null || value === undefined || isNaN(value)) {
@@ -176,7 +159,9 @@ export const publishThresholdOnce = async () => {
       return;
     }
   }
+
   client.publish(thresHoldValueTopic, JSON.stringify(payload), { qos: 1 });
   console.log("📤 Sent thresholds →", payload);
 };
-export default client;
+
+export default startMQTT;

@@ -7,11 +7,24 @@ dotenv.config();
 // const hash = await bcrypt.hash("123456", 10);
 // console.log(hash);
 
-import './config/db.js';
-import './config/mqtt.js';
+import  connection  from './config/db.js';
+import { startMQTT } from "./config/mqtt.js"
+// đảm bảo kết nối đến Database trước  MQTT
+const start = async () => {
+  try {
+    await connection();
+
+    startMQTT();
+
+  } catch (err) {
+    console.error("❌ Startup failed:", err.message);
+    process.exit(1);
+  }
+};
+start();
 import sensorRoutes from './routes/sensorRoutes.js';
 import deviceRoutes from "./routes/deviceRoutes.js";
-import mqttRoutes from "./routes/mqttRoutes.js";
+// import mqttRoutes from "./routes/mqttRoutes.js";
 import getToures from "./routes/getRoutes.js";
 import authRoutes   from "./routes/authRoutes.js";
 import scheduleRoutes from "./routes/scheduleRoutes.js"
@@ -21,10 +34,11 @@ app.use(cors());
 app.use(express.json());
 app.use('/api/sensors', sensorRoutes);
 app.use("/api/device", deviceRoutes);
-app.use("/api/mqtt", mqttRoutes)
+// app.use("/api/mqtt", mqttRoutes)
 app.use("/api/auth", authRoutes);
 app.use("/api/schedule", scheduleRoutes);
 app.use("/api/", getToures);
+
 
 app.get('/', (req, res) => {
   res.send("Smart IoT API Running!");

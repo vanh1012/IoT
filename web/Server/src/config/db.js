@@ -1,7 +1,7 @@
 import "dotenv/config"
 import mongoose from "mongoose"
 
-const connection = async () => {
+export const connection = async () => {
   try {
     await mongoose.connect(process.env.MONGO_DB_URL)
     const state = mongoose.connection.readyState;
@@ -12,6 +12,5 @@ const connection = async () => {
   }
 };
 
-connection();
 
 export default connection;
