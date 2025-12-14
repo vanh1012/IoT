@@ -1,12 +1,12 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import { getMeApi } from "../services/auth.service";
 
 const AuthContext = createContext(null);
 
-const API_URL = "http://localhost:3000";
+const API_URL = "http://localhost:5000";
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem("token"));
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -14,37 +14,21 @@ export function AuthProvider({ children }) {
       const storedToken = localStorage.getItem("token");
       if (storedToken) {
         try {
-          const response = await post(`${API_URL}/api/auth/me`, {
-            headers: {
-              Authorization: `Bearer ${storedToken}`,
-            },
-          });
-          if (response.ok) {
-            const data = await response.json();
-            setUser(data.user);
-            setToken(storedToken);
-          } else {
-            localStorage.removeItem("token");
-            setToken(null);
-            setUser(null);
-          }
+          const response = await getMeApi();
+          setUser(response.user);
         } catch (error) {
           console.error("Auth check failed:", error);
-          localStorage.removeItem("token");
-          setToken(null);
           setUser(null);
         }
       }
       setLoading(false);
     };
-
     checkAuth();
   }, []);
 
-  useEffect(() => {
-    if (token) localStorage.setItem("token", token);
-    else localStorage.removeItem("token");
-  }, [token]);
+
+
+
   const login = async (email, password) => {
     const response = await fetch(`${API_URL}/api/auth/login`, {
       method: "POST",
@@ -54,15 +38,12 @@ export function AuthProvider({ children }) {
       body: JSON.stringify({ email, password }),
     });
 
-    const data = await response.json();
-
+    var data = await response.json();
     if (!response.ok) {
       throw new Error(data.message || "Login failed");
     }
-
-    localStorage.setItem("token", data.token);
-    setToken(data.token);
-    setUser(data.user);
+    localStorage.setItem("token", data.data.token);
+    setUser(data.data.user);
 
     return data;
   };
@@ -76,11 +57,10 @@ export function AuthProvider({ children }) {
 
   const value = {
     user,
-    token,
     loading,
     login,
     logout,
-    isAuthenticated: !!token,
+    isAuthenticated: !!user,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

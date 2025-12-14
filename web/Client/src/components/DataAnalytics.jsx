@@ -115,27 +115,6 @@ export function DataAnalytics({ sensorData }) {
                     </ResponsiveContainer>
                 </Card>
             </div>
-
-            {/* Summary Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 p-4">
-                    <h3 className="text-sm font-semibold text-gray-600 mb-2">Độ Ẩm Đất TB</h3>
-                    <p className="text-3xl font-bold text-green-700">58%</p>
-                    <p className="text-xs text-green-600 mt-1">+5% so với tuần trước</p>
-                </Card>
-
-                <Card className="bg-gradient-to-br from-orange-50 to-yellow-50 border border-orange-200 p-4">
-                    <h3 className="text-sm font-semibold text-gray-600 mb-2">Nhiệt Độ TB</h3>
-                    <p className="text-3xl font-bold text-orange-700">22°C</p>
-                    <p className="text-xs text-orange-600 mt-1">Ổn định</p>
-                </Card>
-
-                <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-200 p-4">
-                    <h3 className="text-sm font-semibold text-gray-600 mb-2">Độ Ẩm Không Khí TB</h3>
-                    <p className="text-3xl font-bold text-blue-700">65%</p>
-                    <p className="text-xs text-blue-600 mt-1">+2% so với tuần trước</p>
-                </Card>
-            </div>
         </div>
     )
 }

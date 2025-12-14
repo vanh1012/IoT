@@ -3,25 +3,27 @@
 import { useState } from "react"
 import { Card } from "./ui/card"
 import { Calendar, Plus, Trash2 } from "lucide-react"
+import useSchedule from "../hooks/useSchedule"
+import { useAuth } from "../context/AuthContext"
+import { useEffect } from "react"
 
 
-export function AutomaticSchedules({ schedules, onAddSchedule }) {
+export function AutomaticSchedules({ }) {
+    const { user } = useAuth();
+    const { schedules, createSchedule, getSchedules, deleteSchedule } = useSchedule(user);
     const [showForm, setShowForm] = useState(false)
     const [formData, setFormData] = useState({
-        device: "Watering",
+        device: "pump",
         time: "12:00",
         duration: 10,
     })
-
     const handleAddSchedule = () => {
-        onAddSchedule({
-            ...formData,
-            id: Date.now().toString(),
-        })
-        setFormData({ device: "Watering", time: "12:00", duration: 10 })
+        console.log(formData);
+        createSchedule({ action: formData.device, time: formData.time, duration: formData.duration })
+        setFormData({ device: "pump", time: "12:00", duration: 10 })
         setShowForm(false)
     }
-
+    useEffect(() => { console.log(schedules) }, [schedules]);
     return (
         <Card className="bg-white shadow-lg border-0 p-6 md:p-8">
             <div className="mb-6">
@@ -37,36 +39,15 @@ export function AutomaticSchedules({ schedules, onAddSchedule }) {
                     </div>
                 </div>
             </div>
-
-            {/* Schedule List */}
-            <div className="space-y-3 mb-6">
-                {schedules.length === 0 ? (
-                    <div className="text-center py-12 text-gray-500">
-                        <p>Chưa có lịch biểu nào</p>
-                    </div>
-                ) : (
-                    schedules.map((schedule) => (
-                        <div
-                            key={schedule.id}
-                            className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                        >
-                            <div className="flex items-center gap-4 flex-1">
-                                <div className="flex-1">
-                                    <p className="font-semibold text-gray-900">{schedule.device}</p>
-                                    <p className="text-sm text-gray-500">
-                                        {schedule.time} • {schedule.duration} phút
-                                    </p>
-                                </div>
-                            </div>
-                            <button className="p-2 text-gray-400 hover:text-red-500 transition-colors">
-                                <Trash2 className="w-4 h-4" />
-                            </button>
-                        </div>
-                    ))
-                )}
-            </div>
-
-            {/* Add Schedule Form */}
+            {!showForm && (
+                <button
+                    onClick={() => setShowForm(true)}
+                    className="w-full py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2"
+                >
+                    <Plus className="w-5 h-5" />
+                    Thêm Lịch Biểu
+                </button>
+            )}
             {showForm && (
                 <div className="bg-gray-50 rounded-lg p-4 mb-4">
                     <div className="space-y-3">
@@ -77,8 +58,8 @@ export function AutomaticSchedules({ schedules, onAddSchedule }) {
                                 onChange={(e) => setFormData({ ...formData, device: e.target.value })}
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                             >
-                                <option value="Watering">Máy Bơm</option>
-                                <option value="Light">Đèn LED</option>
+                                <option value="pump">Máy Bơm</option>
+                                <option value="light">Đèn</option>
                             </select>
                         </div>
                         <div>
@@ -118,16 +99,38 @@ export function AutomaticSchedules({ schedules, onAddSchedule }) {
                     </div>
                 </div>
             )}
+            {/* Schedule List */}
+            <div className="space-y-3 mb-6">
+                {schedules.length === 0 ? (
+                    <div className="text-center py-12 text-gray-500">
+                        <p>Chưa có lịch biểu nào</p>
+                    </div>
+                ) : (
+                    schedules.map((schedule) => (
+                        <div
+                            key={schedule._id}
+                            className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                        >
+                            <div className="flex items-center gap-4 flex-1">
+                                <div className="flex-1">
+                                    <p className="font-semibold text-gray-900">{schedule.action == "pump" ? "Máy bơm" : "Đèn"}</p>
+                                    <p className="text-sm text-gray-500">
+                                        {schedule.time} • {schedule.duration} phút
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => deleteSchedule({ id: schedule._id })}
+                                className="p-2 cursor-pointer text-gray-400 hover:text-red-500 transition-colors">
+                                <Trash2 className="w-4 h-4" />
+                            </button>
+                        </div>
+                    ))
+                )}
+            </div>
 
-            {!showForm && (
-                <button
-                    onClick={() => setShowForm(true)}
-                    className="w-full py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2"
-                >
-                    <Plus className="w-5 h-5" />
-                    Thêm Lịch Biểu
-                </button>
-            )}
+
+
         </Card>
     )
 }

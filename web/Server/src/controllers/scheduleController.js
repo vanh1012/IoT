@@ -35,8 +35,7 @@ export const createSchedule = async (req, res) => {
 
 export const getSchedules = async (req, res) => {
   try {
-    const schedules = await Schedule.find({ user: req.userId });
-
+    const schedules = await Schedule.find();
     res.json({
       success: true,
       data: schedules
@@ -83,7 +82,6 @@ export const deleteSchedule = async (req, res) => {
   try {
     const schedule = await Schedule.findOneAndDelete({
       _id: req.params.id,
-      user: req.userId
     });
 
     if (!schedule) {
