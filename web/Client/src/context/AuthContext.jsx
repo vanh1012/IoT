@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import { getMeApi } from "../services/auth.service";
+import { controlerDeviceApi, getMeApi, updateThresholdApi } from "../services/auth.service";
 
 const AuthContext = createContext(null);
 
@@ -55,11 +55,41 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
+  const updateThreshold = async ({ tempThresholdHighC, tempThresholdLowC, soilThresholdLowPercent, soilThresholdHighPercent, humidThresholdLowPercent, humidThresholdHighPercent }) => {
+    try {
+      console.log({ tempThresholdHighC, tempThresholdLowC, soilThresholdLowPercent, soilThresholdHighPercent, humidThresholdLowPercent, humidThresholdHighPercent });
+      const res = await updateThresholdApi({
+        tempHigh: tempThresholdHighC
+        , tempLow: tempThresholdLowC
+        , soilLow: soilThresholdLowPercent,
+        soilHigh: soilThresholdHighPercent,
+        humidLow: humidThresholdLowPercent, humidHigh: humidThresholdHighPercent
+      });
+      const response = await getMeApi();
+      setUser(response.user);
+      return res.data;
+    }
+    catch (err) {
+      console.error(err);
+    }
+  }
+
+  const controlDevice = async ({ type, state }) => {
+    try {
+      const res = await controlerDeviceApi({ type, state });
+      setUser(pre => ({ ...pre, [type]: state }));
+    }
+    catch (err) {
+      console.error(err);
+    }
+  }
   const value = {
     user,
     loading,
     login,
     logout,
+    updateThreshold,
+    controlDevice,
     isAuthenticated: !!user,
   };
 
