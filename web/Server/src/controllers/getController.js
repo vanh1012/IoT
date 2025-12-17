@@ -32,7 +32,8 @@ export const getSensorChart24h = async (req, res) => {
           hour: {
             $dateTrunc: {
               date: "$timestamp",
-              unit: "hour"
+              unit: "hour",
+              binSize: 4
             }
           },
           airTemperature: 1,
@@ -63,8 +64,8 @@ export const getSensorChart24h = async (req, res) => {
 
     const data = [];
 
-    for (let i = 23; i >= 0; i--) {
-      const hour = new Date(now.getTime() - i * 60 * 60 * 1000);
+    for (let i = 5; i >= 0; i--) {
+      const hour = new Date(now.getTime() - i * 4 * 60 * 60 * 1000);
       hour.setMinutes(0, 0, 0);
 
       const key = hour.toISOString();
@@ -89,7 +90,7 @@ export const getSensorChart24h = async (req, res) => {
     res.json({
       success: true,
       range: "last_24_hours",
-      interval: "1_hour",
+      interval: "4_hours",
       data
     });
 
