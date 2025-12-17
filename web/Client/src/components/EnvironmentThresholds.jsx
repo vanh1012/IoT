@@ -159,13 +159,6 @@ export function EnvironmentThresholds() {
         )}
       </div>
 
-      {/* Info */}
-      <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-        <p className="text-sm text-blue-700">
-          <strong>Mẹo:</strong> Hệ thống sẽ tự động bật máy bơm khi độ ẩm dưới
-          ngưỡng tối thiểu và gửi cảnh báo khi vượt ngưỡng.
-        </p>
-      </div>
     </Card>
   );
 }
