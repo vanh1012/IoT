@@ -3,6 +3,7 @@ import "dotenv/config";
 import { GoogleGenAI } from "@google/genai";
 import { predictTomorrowFromMongo } from "./predictionService.js"; // cùng folder services
 
+
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
@@ -65,9 +66,63 @@ Dưới đây là mô tả đề tài mà bạn được phép sử dụng làm 
 ${PROJECT_CONTEXT}
 `;
 
+// ================== TIỆN ÍCH: RETRY / BACKOFF / FALLBACK ==================
+function sleep(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+function isOverloadedError(err) {
+  const msg = (err?.message || "").toLowerCase();
+  return (
+    msg.includes("503") ||
+    msg.includes("overloaded") ||
+    msg.includes("unavailable") ||
+    msg.includes("resource_exhausted")
+  );
+}
+
+async function generateWithRetry({ model, contents, config }, retries = 3) {
+  let lastErr;
+
+  for (let i = 0; i <= retries; i++) {
+    try {
+      return await ai.models.generateContent({ model, contents, config });
+    } catch (err) {
+      lastErr = err;
+
+      // Chỉ retry khi overload/unavailable
+      if (!isOverloadedError(err) || i === retries) break;
+
+      // Exponential backoff: 500ms, 1000ms, 2000ms, 4000ms...
+      await sleep(500 * Math.pow(2, i));
+    }
+  }
+
+  throw lastErr;
+}
+
+async function generateWithFallback({ contents, config }) {
+  // Ưu tiên flash mới, fallback sang flash đời cũ hơn
+  const models = ["gemini-2.5-flash", "gemini-2.0-flash"];
+  let lastErr;
+
+  for (const m of models) {
+    try {
+      return await generateWithRetry({ model: m, contents, config }, 3);
+    } catch (err) {
+      lastErr = err;
+
+      // Nếu lỗi không phải overload -> không cần thử model khác, throw luôn
+      if (!isOverloadedError(err)) break;
+    }
+  }
+
+  throw lastErr;
+}
+
 // ================== HÀM NHẬN DIỆN CÂU HỎI DỰ ĐOÁN ==================
 function isForecastQuestion(text) {
-  const lower = text.toLowerCase();
+  const lower = (text || "").toLowerCase();
 
   const hasTomorrow =
     lower.includes("ngày mai") || lower.includes("mai") || lower.includes("tomorrow");
@@ -107,15 +162,13 @@ Tuy nhiên, bạn vẫn phải trả lời trong phạm vi đề tài "Hệ th�
     }
   }
 
-  // 2. Gọi Gemini
-  const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
-    contents: [
-      {
-        role: "user",
-        parts: [
-          {
-            text: `
+  // 2. Chuẩn bị payload cho Gemini
+  const contents = [
+    {
+      role: "user",
+      parts: [
+        {
+          text: `
 ${predictionSnippet}
 
 Câu hỏi của người dùng: "${userMessage}".
@@ -124,14 +177,17 @@ Hãy trả lời chỉ dựa trên:
 - phạm vi đề tài "Hệ thống tưới cây thông minh" đã được mô tả trong systemInstruction,
 - và (nếu có) các số liệu dự đoán ở trên.
 `,
-          },
-        ],
-      },
-    ],
-    config: {
-      systemInstruction: SYSTEM_INSTRUCTION,
+        },
+      ],
     },
-  });
+  ];
+
+  const config = {
+    systemInstruction: SYSTEM_INSTRUCTION,
+  };
+
+  // 3. Gọi Gemini với retry + fallback
+  const response = await generateWithFallback({ contents, config });
 
   // node SDK mới: response có thể là object, nhưng chị đang dùng response.text nên giữ nguyên
   return response.text;
@@ -139,8 +195,6 @@ Hãy trả lời chỉ dựa trên:
 
 // ================== (OPTIONAL) CLI test riêng ==================
 if (import.meta.main) {
-  // Cho phép chạy: node src/services/projectBotService.js
-  // để chat nhanh trên terminal nếu muốn
   const readline = await import("readline");
 
   const rl = readline.createInterface({

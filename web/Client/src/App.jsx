@@ -3,7 +3,6 @@ import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import LoginPage from "./app/auth/LoginPage";
 import DashboardPage from "./app/dashboard/DashboardPage";
-
 function App() {
   return (
     <BrowserRouter>

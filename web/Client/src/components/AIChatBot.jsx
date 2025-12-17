@@ -1,11 +1,11 @@
-"use client";
-
 import { useState, useRef, useEffect } from "react";
+import axios from "axios";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { MessageCircle, Send, X, Minimize2, Maximize2, Loader } from "lucide-react";
+import { chatWithBotApi } from "../services/botService";
 
-export function AIChatbox({ sensorData, thresholds }) {
+export function AIChatbox() {
     const [isOpen, setIsOpen] = useState(false);
     const [isMinimized, setIsMinimized] = useState(false);
     const [messages, setMessages] = useState([
@@ -35,9 +35,11 @@ export function AIChatbox({ sensorData, thresholds }) {
         e.preventDefault();
         if (!input.trim()) return;
 
+        const inputValue = input.trim();
+
         const userMessage = {
             id: Date.now().toString(),
-            text: input,
+            text: inputValue,
             sender: "user",
             timestamp: new Date().toLocaleTimeString("vi-VN", {
                 hour: "2-digit",
@@ -50,27 +52,15 @@ export function AIChatbox({ sensorData, thresholds }) {
         setLoading(true);
 
         try {
-            const response = await fetch("/api/project-bot/chat", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    message: input,
-                    sensorData: sensorData,
-                    thresholds: thresholds,
-                }),
-            });
-
-            if (!response.ok) {
-                throw new Error("Failed to get response from chatbot");
+            const response = await chatWithBotApi(inputValue);
+            console.log("Bot response:", response);
+            if (!response.success) {
+                throw new Error(response.message || "Failed to get response from chatbot");
             }
-
-            const data = await response.json();
 
             const botMessage = {
                 id: (Date.now() + 1).toString(),
-                text: data.reply || "Xin lỗi, tôi không thể xử lý câu hỏi của bạn lúc này.",
+                text: response.data.data.answer,
                 sender: "bot",
                 timestamp: new Date().toLocaleTimeString("vi-VN", {
                     hour: "2-digit",
@@ -83,7 +73,7 @@ export function AIChatbox({ sensorData, thresholds }) {
             console.error("Error:", error);
             const errorMessage = {
                 id: (Date.now() + 1).toString(),
-                text: "Xin lỗi, có lỗi xảy ra. Vui lòng thử lại sau.",
+                text: error.response?.data?.message || "Xin lỗi, có lỗi xảy ra. Vui lòng thử lại sau.",
                 sender: "bot",
                 timestamp: new Date().toLocaleTimeString("vi-VN", {
                     hour: "2-digit",
@@ -109,10 +99,8 @@ export function AIChatbox({ sensorData, thresholds }) {
 
             {isOpen && (
                 <div
-                    className={`fixed bottom-6 right-6 w-96 bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-all duration-300 z-50 ${isMinimized ? "h-16" : "h-[600px]"
-                        }`}
+                    className={`fixed bottom-6 right-6 w-96 bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-all duration-300 z-50 ${isMinimized ? "h-16" : "h-[600px]"}`}
                 >
-                    {/* HEADER */}
                     <div className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-6 py-4 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <MessageCircle className="w-5 h-5" />
@@ -139,26 +127,23 @@ export function AIChatbox({ sensorData, thresholds }) {
                         </div>
                     </div>
 
-                    {/* BODY */}
                     {!isMinimized && (
                         <>
                             <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
                                 {messages.map((msg) => (
                                     <div
                                         key={msg.id}
-                                        className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"
-                                            }`}
+                                        className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
                                     >
                                         <div
                                             className={`max-w-xs px-4 py-2 rounded-lg ${msg.sender === "user"
-                                                    ? "bg-blue-500 text-white rounded-br-none"
-                                                    : "bg-gray-200 text-gray-900 rounded-bl-none"
-                                                }`}
+                                                ? "bg-blue-500 text-white rounded-br-none"
+                                                : "bg-gray-200 text-gray-900 rounded-bl-none"
+                                            }`}
                                         >
                                             <p className="text-sm">{msg.text}</p>
                                             <p
-                                                className={`text-xs mt-1 ${msg.sender === "user" ? "text-blue-100" : "text-gray-600"
-                                                    }`}
+                                                className={`text-xs mt-1 ${msg.sender === "user" ? "text-blue-100" : "text-gray-600"}`}
                                             >
                                                 {msg.timestamp}
                                             </p>
@@ -178,7 +163,6 @@ export function AIChatbox({ sensorData, thresholds }) {
                                 <div ref={messagesEndRef} />
                             </div>
 
-                            {/* INPUT */}
                             <form onSubmit={handleSendMessage} className="border-t p-4 bg-white">
                                 <div className="flex gap-2">
                                     <Input

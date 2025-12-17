@@ -57,10 +57,10 @@ export const startMQTT = () => {
         return;
       }
 
-      if (topic === logData) { // nhận lại hoạt động bật tắt bơm/đèn, chỉnh sửa ngưỡng từ esp32
-        console.log("LOG Message:", message.toString());
-        return;
-      }
+      // if (topic === logData) { // nhận lại hoạt động bật tắt bơm/đèn, chỉnh sửa ngưỡng từ esp32
+      //   console.log("LOG Message:", message.toString());
+      //   return;
+      // }
 
       if (topic === thresholdAckTopic) { // Confirm rằng Esp32 đã đồng bộ được các biến ngưỡng 
         console.log("ESP32 confirmed threshold received!");
