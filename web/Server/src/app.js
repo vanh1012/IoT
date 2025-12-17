@@ -16,7 +16,6 @@ import projectBotRoutes from './routes/projectBotRoutes.js';
 import predictionRoutes from './routes/predictionRoutes.js';
 
 dotenv.config();
-import mqttRoutes   from "./routes/mqttRoutes.js";
 import authRoutes   from "./routes/authRoutes.js";
 import scheduleRoutes from "./routes/scheduleRoutes.js"
 

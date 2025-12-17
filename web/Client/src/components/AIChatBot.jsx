@@ -31,7 +31,7 @@ export function AIChatbox({ sensorData, thresholds }) {
         scrollToBottom();
     }, [messages]);
 
-    const handleSendMessage = (e) => {
+    const handleSendMessage = async (e) => {
         e.preventDefault();
         if (!input.trim()) return;
 
@@ -49,18 +49,28 @@ export function AIChatbox({ sensorData, thresholds }) {
         setInput("");
         setLoading(true);
 
-        setTimeout(() => {
-            const mockResponses = [
-                "Tôi hiểu bạn muốn tưới nước. Hãy kiểm tra độ ẩm đất trước nhé!",
-                "Dựa trên dữ liệu hiện tại, cây của bạn đang khỏe mạnh.",
-                "Bạn có thể bật đèn thêm 2-3 giờ vào buổi tối để giúp cây phát triển.",
-                "Nhiệt độ hiện tại hơi cao, hãy chắc chắn cây được tưới đủ nước.",
-                "Độ ẩm không khí hơi thấp. Hãy xem xét tăng độ ẩm.",
-            ];
+        try {
+            const response = await fetch("/api/project-bot/chat", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    message: input,
+                    sensorData: sensorData,
+                    thresholds: thresholds,
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to get response from chatbot");
+            }
+
+            const data = await response.json();
 
             const botMessage = {
                 id: (Date.now() + 1).toString(),
-                text: mockResponses[Math.floor(Math.random() * mockResponses.length)],
+                text: data.reply || "Xin lỗi, tôi không thể xử lý câu hỏi của bạn lúc này.",
                 sender: "bot",
                 timestamp: new Date().toLocaleTimeString("vi-VN", {
                     hour: "2-digit",
@@ -69,8 +79,21 @@ export function AIChatbox({ sensorData, thresholds }) {
             };
 
             setMessages((prev) => [...prev, botMessage]);
+        } catch (error) {
+            console.error("Error:", error);
+            const errorMessage = {
+                id: (Date.now() + 1).toString(),
+                text: "Xin lỗi, có lỗi xảy ra. Vui lòng thử lại sau.",
+                sender: "bot",
+                timestamp: new Date().toLocaleTimeString("vi-VN", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                }),
+            };
+            setMessages((prev) => [...prev, errorMessage]);
+        } finally {
             setLoading(false);
-        }, 800);
+        }
     };
 
     return (
