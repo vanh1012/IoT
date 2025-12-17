@@ -77,3 +77,12 @@ extern const uint8_t ALERT_HUMID;
 // ================== TRẠNG THÁI RELAY ==================
 extern bool pumpOn;
 extern bool lightOn;
+
+// Publish Topic
+extern const char *sensorTopic;
+extern const char *logTopic;
+extern const char *thresHolTopic;
+
+// Subscribe Topic 
+extern const char *settingsCmd;
+extern const char *thresHoldValueTopic;

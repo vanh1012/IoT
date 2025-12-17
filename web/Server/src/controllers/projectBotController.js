@@ -13,7 +13,7 @@ export async function chatWithProjectBot(req, res) {
     }
 
     const answer = await askProjectBot(message);
-
+    
     return res.json({
       success: true,
       data: {

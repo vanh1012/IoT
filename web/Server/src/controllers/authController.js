@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
-
+import brycpt from "bcrypt"
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = "7d";
 
@@ -10,6 +10,14 @@ const generateToken = (userId) => {
 
 export const register = async (req, res) => {
   try {
+    const totalUsers = await User.countDocuments();
+    if (totalUsers > 0) {
+      return res.status(403).json({
+        success: false,
+        message: "Only one account is allowed in the system."
+      });
+    }
+
     const { username, email, password } = req.body;
 
     if (!username || !email || !password) {
@@ -29,8 +37,8 @@ export const register = async (req, res) => {
         message: "User with this email or username already exists"
       });
     }
-
-    const user = await User.create({ username, email, password });
+    const hashedPassword =  brycpt.hashSync(password,10);
+    const user = await User.create({ username, email, password: hashedPassword });
     const token = generateToken(user._id);
 
     res.status(201).json({
@@ -125,7 +133,13 @@ export const getMe = async (req, res) => {
           username: user.username,
           email: user.email,
           pump: user.pump,
-          light: user.light
+          light: user.light,
+          humidThresholdHighPercent : user?.humidThresholdHighPercent,
+          humidThresholdLowPercent : user ?.humidThresholdLowPercent,
+          soilThresholdHighPercent : user?.soilThresholdHighPercent,
+          soilThresholdLowPercent : user?.soilThresholdLowPercent,
+          tempThresholdHighC : user?.tempThresholdHighC,
+          tempThresholdLowC : user?.tempThresholdLowC
         }
       }
     });

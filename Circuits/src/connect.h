@@ -2,4 +2,4 @@
 
 void setupNetwork();
 void checkNetworkConnection();
-void mqttPublishData();
+void mqttPublishData(const char *topic);

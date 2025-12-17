@@ -124,6 +124,7 @@ void loop() {
       handleLightStatusScreen();
       break;
   }
+  mqttPublishThreshold();
 
   delay(20);
 }

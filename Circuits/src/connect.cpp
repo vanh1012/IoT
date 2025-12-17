@@ -1,5 +1,5 @@
-#include "globals.h"
 #include "actuators.h"
+#include "connect.h"
 
 const char *ssid = "Wokwi-GUEST";
 const char *password = "";
@@ -8,28 +8,21 @@ const char *password = "";
 const char *mqttServer = "broker.hivemq.com";
 int port = 1883;
 PubSubClient mqttClient;
-// Topic IoT23CLC09/Group5/#
-
-// Publish Topic
-const char *topicData = "IoT23CLC09/Group5/data";
-const char *logData = "IoT23CLC09/Group5/log";
-// Subscribe Topc 
-const char *settingsCmd = "IoT23CLC09/Group5/cmd";
 
 WiFiClient wifiClient;
-
-void callback(char *topic, byte *payload, unsigned int length)
+char jsonBuffer[512];
+static void callback(char *topic, byte *payload, unsigned int length)
 {
     Serial.print("📩 MQTT Topic: ");
     Serial.println(topic);
 
     // Convert payload to string
-    char jsonBuffer[150];
     memcpy(jsonBuffer, payload, length);
     jsonBuffer[length] = '\0';
     Serial.println(jsonBuffer);
 
-    // if (strcmp(topic, "IoT23CLC09/Group5/cmd") == 0)
+    // điều khiển máy bơm, đèn cây, ngưỡng
+    if (strcmp(topic, settingsCmd) == 0)
     {
         StaticJsonDocument<200> doc;
         DeserializationError error = deserializeJson(doc, jsonBuffer);
@@ -43,9 +36,13 @@ void callback(char *topic, byte *payload, unsigned int length)
         {
             pumpOn = doc["pump"].as<bool>();
             if (pumpOn)
+            {
                 turnPumpOn();
+            }
             else 
+            {
                 turnPumpOff();
+            }
             Serial.print("Pump:");
             Serial.println(pumpOn ? "ON" : "OFF");
         }
@@ -60,6 +57,35 @@ void callback(char *topic, byte *payload, unsigned int length)
             Serial.print("Light:");
             Serial.println(lightOn ? "ON" : "OFF");
         }
+    }
+    if (strcmp(topic, thresHoldValueTopic) == 0)
+    {
+
+        unsigned int copyLength = (length < sizeof(jsonBuffer) - 1)
+                                      ? length
+                                      : (sizeof(jsonBuffer) - 1);
+        memcpy(jsonBuffer, payload, copyLength);
+        jsonBuffer[copyLength] = '\0';
+
+        ArduinoJson::StaticJsonDocument<300> doc;
+
+        auto err = deserializeJson(doc, jsonBuffer);
+        if (err)
+        {
+            Serial.println("❌ JSON Parse Error in Threshold Topic!");
+            return;
+        }
+
+        tempThresholdLowC = doc["tempThresholdLowC"] | tempThresholdLowC;
+        tempThresholdHighC = doc["tempThresholdHighC"] | tempThresholdHighC;
+        soilThresholdLowPercent = doc["soilThresholdLowPercent"] | soilThresholdLowPercent;
+        soilThresholdHighPercent = doc["soilThresholdHighPercent"] | soilThresholdHighPercent;
+        humidThresholdLowPercent = doc["humidThresholdLowPercent"] | humidThresholdLowPercent;
+        humidThresholdHighPercent = doc["humidThresholdHighPercent"] | humidThresholdHighPercent;
+
+        Serial.println("📌 Updated thresholds from MQTT!");
+        mqttClient.publish(thresHolTopic, jsonBuffer, true);
+        mqttClient.publish("IoT23CLC09/Group5/thresAck", "Ok"); // báo cho server đã đồng hộ thành công ngưỡng từ db
     }
 }
 
@@ -100,7 +126,9 @@ void mqttConnect()
             lcd.clear();
             lcd.print("MQTT OK!");
             delay(1000);
-            mqttClient.subscribe(settingsCmd);
+            mqttClient.subscribe(settingsCmd); // nhận lệnh điều khiển máy bơm 
+            mqttClient.subscribe(thresHoldValueTopic); // nhận biến ngưỡng từ server
+            mqttClient.publish("IoT23CLC09/Group5/thresSyncReq", "1"); // gửi yêu cầu sync ngưỡng khi mới khởi động 
         }
         else
         {
@@ -127,15 +155,22 @@ void checkNetworkConnection()
     mqttClient.loop();
 }
 
-void mqttPublishData()
+void mqttPublishData(const char *topic)
 {
     JsonDocument doc;
-    doc["soil"] = soilPercent;
-    doc["air"] = currentHumidity;
-    doc["temp"] = currentTemp;
+    if(strcmp(topic,sensorTopic) == 0)
+    {
+        doc["soil"] = soilPercent;
+        doc["air"] = currentHumidity;
+        doc["temp"] = currentTemp;
+    
+        char jsonBuffer[128];
+        serializeJson(doc, jsonBuffer);
+        mqttClient.publish(sensorTopic, jsonBuffer);
+    }
+    if(strcmp(topic, logTopic) == 0)
+    {
 
-    char jsonBuffer[128];
-    serializeJson(doc, jsonBuffer);
-    mqttClient.publish(topicData, jsonBuffer);
+    }
 }
 

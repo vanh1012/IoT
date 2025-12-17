@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import { controlerDeviceApi, getMeApi, updateThresholdApi } from "../services/auth.service";
 
 const AuthContext = createContext(null);
 
@@ -6,7 +7,6 @@ const API_URL = "http://localhost:5000";
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem("token"));
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -14,32 +14,20 @@ export function AuthProvider({ children }) {
       const storedToken = localStorage.getItem("token");
       if (storedToken) {
         try {
-          const response = await post(`${API_URL}/api/auth/me`, {
-            headers: {
-              Authorization: `Bearer ${storedToken}`,
-            },
-          });
-          if (response.ok) {
-            const data = await response.json();
-            setUser(data.user);
-            setToken(storedToken);
-          } else {
-            localStorage.removeItem("token");
-            setToken(null);
-            setUser(null);
-          }
+          const response = await getMeApi();
+          setUser(response.user);
         } catch (error) {
           console.error("Auth check failed:", error);
-          localStorage.removeItem("token");
-          setToken(null);
           setUser(null);
         }
       }
       setLoading(false);
     };
-
     checkAuth();
   }, []);
+
+
+
 
   const login = async (email, password) => {
     const response = await fetch(`${API_URL}/api/auth/login`, {
@@ -50,40 +38,16 @@ export function AuthProvider({ children }) {
       body: JSON.stringify({ email, password }),
     });
 
-    const data = await response.json();
-
+    var data = await response.json();
     if (!response.ok) {
       throw new Error(data.message || "Login failed");
     }
-
-    localStorage.setItem("token", data.token);
-    setToken(data.token);
-    setUser(data.user);
+    localStorage.setItem("token", data.data.token);
+    setUser(data.data.user);
 
     return data;
   };
 
-  const register = async (name, email, password) => {
-    const response = await fetch(`${API_URL}/api/auth/register`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ name, email, password }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || "Registration failed");
-    }
-
-    localStorage.setItem("token", data.token);
-    setToken(data.token);
-    setUser(data.user);
-
-    return data;
-  };
 
   const logout = () => {
     localStorage.removeItem("token");
@@ -91,14 +55,42 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
+  const updateThreshold = async ({ tempThresholdHighC, tempThresholdLowC, soilThresholdLowPercent, soilThresholdHighPercent, humidThresholdLowPercent, humidThresholdHighPercent }) => {
+    try {
+      console.log({ tempThresholdHighC, tempThresholdLowC, soilThresholdLowPercent, soilThresholdHighPercent, humidThresholdLowPercent, humidThresholdHighPercent });
+      const res = await updateThresholdApi({
+        tempHigh: tempThresholdHighC
+        , tempLow: tempThresholdLowC
+        , soilLow: soilThresholdLowPercent,
+        soilHigh: soilThresholdHighPercent,
+        humidLow: humidThresholdLowPercent, humidHigh: humidThresholdHighPercent
+      });
+      const response = await getMeApi();
+      setUser(response.user);
+      return res.data;
+    }
+    catch (err) {
+      console.error(err);
+    }
+  }
+
+  const controlDevice = async ({ type, state }) => {
+    try {
+      const res = await controlerDeviceApi({ type, state });
+      setUser(pre => ({ ...pre, [type]: state }));
+    }
+    catch (err) {
+      console.error(err);
+    }
+  }
   const value = {
     user,
-    token,
     loading,
     login,
-    register,
     logout,
-    isAuthenticated: !!token,
+    updateThreshold,
+    controlDevice,
+    isAuthenticated: !!user,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
