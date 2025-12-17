@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from "react";
-import axios from "axios";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { MessageCircle, Send, X, Minimize2, Maximize2, Loader } from "lucide-react";
@@ -54,13 +53,14 @@ export function AIChatbox() {
         try {
             const response = await chatWithBotApi(inputValue);
             console.log("Bot response:", response);
+
             if (!response.success) {
                 throw new Error(response.message || "Failed to get response from chatbot");
             }
 
             const botMessage = {
                 id: (Date.now() + 1).toString(),
-                text: response.data.data.answer,
+                text: response.data.answer,
                 sender: "bot",
                 timestamp: new Date().toLocaleTimeString("vi-VN", {
                     hour: "2-digit",

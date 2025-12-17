@@ -1,7 +1,7 @@
 import User from "../models/User.js";
 import Log from "../models/Log.js"
 import { controlDeviceService } from "../services/deviceService.js";
-import { sendAlertEmail } from "../services/alertService.js";
+import { sendAlertEmail, sendAlertPhone } from "../services/alertService.js";
 import { publishMessage } from "../config/mqtt.js"
 
 export const controlDevice = async (req, res) => {
@@ -51,6 +51,7 @@ export const controlDevice = async (req, res) => {
       const subject = `⚠️ Device ${type} was ${state ? "turned ON" : "turned OFF"}`;
       const text = `The device "${type}" has been ${state ? "activated" : "deactivated"}.\n\nTime: ${new Date().toLocaleString()}`;
       await sendAlertEmail(updatedUser.email, subject, text);
+      // await sendAlertPhone(null, subject, text);
     } catch (err) {
       console.log("Email send failed:", err.message);
     }
