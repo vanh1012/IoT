@@ -48,8 +48,8 @@ export const controlDevice = async (req, res) => {
 
     // 5️⃣ Gửi email
     try {
-      const subject = `⚠️ Device ${type} was ${state ? "turned ON" : "turned OFF"}`;
-      const text = `The device "${type}" has been ${state ? "activated" : "deactivated"}.\n\nTime: ${new Date().toLocaleString()}`;
+      const subject = `⚠️ Thiết bị ${type} đã được ${state ? "bật" : "tắt"}`;
+      const text = `thiết bị "${type}" được ${state ? "bật" : "tắt"}.\n\nThời gian: ${new Date().toLocaleString()}`;
       await sendAlertEmail(updatedUser.email, subject, text);
       await sendAlertPhone(null, subject, text);
     } catch (err) {
@@ -60,7 +60,7 @@ export const controlDevice = async (req, res) => {
     // -------- LOG hành động -------
     await Log.createLog({
       type: "MANUAL",
-      message: `Thiết bị ${type} đã được ${state ? "Bật" : "Tắt"} từ web`
+      message: `Thiết bị ${type} đã được ${state ? "bật" : "tắt"} từ web`
     });
 
     res.json({

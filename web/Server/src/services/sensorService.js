@@ -23,7 +23,5 @@ export const saveIfChanged = async (newData) => {
     latest.airTemperature !== newData.airTemperature;
 
   if (!isDifferent) return false; 
-
   await Sensor.create(newData);
-  return true;
 };
