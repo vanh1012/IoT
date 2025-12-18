@@ -180,24 +180,18 @@ void handleTempConfig() {
       tempLowCandidate = tempThresholdLowC;
       lcd.setCursor(0, 0);
       lcd.write(byte(1));
-      lcd.print(" Nhiet do:");
+      lcd.print("Hien Tai:");
       lcd.print(currentTemp, 1);
       lcd.print((char)223);
       lcd.print("C");
-
-      lcd.setCursor(0, 1);
-      lcd.print("Set NGUONG DUOI");
     } else {
       tempHighCandidate = tempThresholdHighC;
       lcd.setCursor(0, 0);
       lcd.write(byte(1));
-      lcd.print(" Nhiet do:");
+      lcd.print("Hien Tai:");
       lcd.print(currentTemp, 1);
       lcd.print((char)223);
       lcd.print("C");
-
-      lcd.setCursor(0, 1);
-      lcd.print("Set NGUONG TREN");
     }
     tempConfigInit = true;
   }
@@ -208,16 +202,16 @@ void handleTempConfig() {
   lcd.setCursor(0, 1);
   if (tempConfigPhase == 0) {
     tempLowCandidate = mapped;
-    lcd.print("Duoi: ");
+    lcd.print("Nguong Duoi: ");
     lcd.print(tempLowCandidate);
     lcd.print((char)223);
-    lcd.print("C    ");
+    lcd.print("C");
   } else {
     tempHighCandidate = mapped;
-    lcd.print("Tren: ");
+    lcd.print("Nguong Tren: ");
     lcd.print(tempHighCandidate);
     lcd.print((char)223);
-    lcd.print("C    ");
+    lcd.print("C");
   }
 
   if (buttonPressedOnce()) {
@@ -261,22 +255,16 @@ void handleSoilConfig() {
       soilLowCandidate = soilThresholdLowPercent;
       lcd.setCursor(0, 0);
       lcd.write(byte(2));
-      lcd.print(" Dat:");
+      lcd.print("Hien Tai: ");
       lcd.print(soilPercent);
-      lcd.print("%   ");
-
-      lcd.setCursor(0, 1);
-      lcd.print("Set NGUONG DUOI");
+      lcd.print("% ");
     } else {
       soilHighCandidate = soilThresholdHighPercent;
       lcd.setCursor(0, 0);
       lcd.write(byte(2));
-      lcd.print(" Dat:");
+      lcd.print("Hien Tai: ");
       lcd.print(soilPercent);
-      lcd.print("%   ");
-
-      lcd.setCursor(0, 1);
-      lcd.print("Set NGUONG TREN");
+      lcd.print("% ");
     }
     soilConfigInit = true;
   }
@@ -288,14 +276,14 @@ void handleSoilConfig() {
   lcd.setCursor(0, 1);
   if (soilConfigPhase == 0) {
     soilLowCandidate = mapped;
-    lcd.print("Duoi: ");
+    lcd.print("Nguong Duoi: ");
     lcd.print(soilLowCandidate);
-    lcd.print("%   ");
+    lcd.print("%");
   } else {
     soilHighCandidate = mapped;
-    lcd.print("Tren: ");
+    lcd.print("Nguong Tren: ");
     lcd.print(soilHighCandidate);
-    lcd.print("%   ");
+    lcd.print("%");
   }
 
   if (buttonPressedOnce()) {
@@ -336,22 +324,16 @@ void handleHumidConfig() {
       humidLowCandidate = humidThresholdLowPercent;
       lcd.setCursor(0, 0);
       lcd.write(byte(3));
-      lcd.print(" KK:");
+      lcd.print("Hien Tai: ");
       lcd.print(currentHumidity, 1);
-      lcd.print("%   ");
-
-      lcd.setCursor(0, 1);
-      lcd.print("Set NGUONG DUOI");
+      lcd.print("% ");
     } else {
       humidHighCandidate = humidThresholdHighPercent;
       lcd.setCursor(0, 0);
       lcd.write(byte(3));
-      lcd.print(" KK:");
+      lcd.print("Hien Tai: ");
       lcd.print(currentHumidity, 1);
-      lcd.print("%   ");
-
-      lcd.setCursor(0, 1);
-      lcd.print("Set NGUONG TREN");
+      lcd.print("% ");
     }
     humidConfigInit = true;
   }
@@ -363,14 +345,14 @@ void handleHumidConfig() {
   lcd.setCursor(0, 1);
   if (humidConfigPhase == 0) {
     humidLowCandidate = mapped;
-    lcd.print("Duoi: ");
+    lcd.print("Nguong Duoi: ");
     lcd.print(humidLowCandidate);
-    lcd.print("%   ");
+    lcd.print("%");
   } else {
     humidHighCandidate = mapped;
-    lcd.print("Tren: ");
+    lcd.print("Nguong Tren: ");
     lcd.print(humidHighCandidate);
-    lcd.print("%   ");
+    lcd.print("%");
   }
 
   if (buttonPressedOnce()) {

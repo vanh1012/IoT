@@ -25,6 +25,10 @@ start();
 import sensorRoutes from './routes/sensorRoutes.js';
 import deviceRoutes from "./routes/deviceRoutes.js";
 // import mqttRoutes from "./routes/mqttRoutes.js";
+import projectBotRoutes from './routes/projectBotRoutes.js';
+import predictionRoutes from './routes/predictionRoutes.js';
+dotenv.config();
+// import mqttRoutes from "./routes/mqttRoutes.js";
 import getRoutes from "./routes/getRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import scheduleRoutes from "./routes/scheduleRoutes.js"
@@ -39,11 +43,14 @@ app.use("/api/device", deviceRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/schedule", scheduleRoutes);
 app.use("/api/", getRoutes);
+app.use("/api/project-bot", projectBotRoutes);
+app.use("/api/prediction", predictionRoutes);
 
 
 app.get('/', (req, res) => {
   res.send("Smart IoT API Running!");
 });
+
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, "0.0.0.0", () =>

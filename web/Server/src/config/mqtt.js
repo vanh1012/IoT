@@ -2,7 +2,7 @@ import mqtt from "mqtt";
 import Sensor from "../models/Sensor.js";
 import User from "../models/User.js"
 import { saveIfChanged } from "../services/sensorService.js";
-import { sendAlertEmail, checkThresholdAndAlert } from "../services/alertService.js"
+import { sendAlertEmail, checkThresholdAndAlert, sendAlertPhone } from "../services/alertService.js"
 import Log from "../models/Log.js";
 import { updateThresholdFromMQTT } from "../controllers/deviceController.js"
 let client = null;
