@@ -51,7 +51,7 @@ export const controlDevice = async (req, res) => {
       const subject = `⚠️ Device ${type} was ${state ? "turned ON" : "turned OFF"}`;
       const text = `The device "${type}" has been ${state ? "activated" : "deactivated"}.\n\nTime: ${new Date().toLocaleString()}`;
       await sendAlertEmail(updatedUser.email, subject, text);
-      // await sendAlertPhone(null, subject, text);
+      await sendAlertPhone(null, subject, text);
     } catch (err) {
       console.log("Email send failed:", err.message);
     }

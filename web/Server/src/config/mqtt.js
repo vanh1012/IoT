@@ -2,14 +2,9 @@ import mqtt from "mqtt";
 import Sensor from "../models/Sensor.js";
 import User from "../models/User.js"
 import { saveIfChanged } from "../services/sensorService.js";
-<<<<<<< HEAD
 import { sendAlertEmail, checkThresholdAndAlert, sendAlertPhone } from "../services/alertService.js"
-
-=======
-import { sendAlertEmail, checkThresholdAndAlert } from "../services/alertService.js"
 import Log from "../models/Log.js";
 import { updateThresholdFromMQTT } from "../controllers/deviceController.js"
->>>>>>> 9fbde883b75991850828ab632c8651516eb75ae9
 let client = null;
 
 // subscribe 
@@ -63,12 +58,6 @@ export const startMQTT = () => {
         return;
       }
 
-<<<<<<< HEAD
-      // if (topic === logData) { // nhận lại hoạt động bật tắt bơm/đèn, chỉnh sửa ngưỡng từ esp32
-      //   console.log("LOG Message:", message.toString());
-      //   return;
-      // }
-=======
       if (topic === logData) {
         const json = JSON.parse(message.toString());
         console.log("Log from ESP32:", json);
@@ -106,7 +95,6 @@ export const startMQTT = () => {
         }
         return;
       }
->>>>>>> 9fbde883b75991850828ab632c8651516eb75ae9
 
       if (topic === thresholdAckTopic) { // Confirm rằng Esp32 đã đồng bộ được các biến ngưỡng 
         console.log("ESP32 confirmed threshold received!");

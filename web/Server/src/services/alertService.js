@@ -1,5 +1,6 @@
 import transporter from "../config/nodemailer.js";
 import User from "../models/User.js";
+import axios from "axios";
 
 export const sendAlertEmail = async (to, subject, text) => {
   try {
@@ -17,7 +18,6 @@ export const sendAlertEmail = async (to, subject, text) => {
   }
 };
 
-// ✅ Thêm hàm gửi Pushsafer
 export const sendAlertPhone = async (to, subject, text) => {
   try {
     const key = process.env.PUSHSAFER_KEY;
@@ -43,7 +43,7 @@ export const sendAlertPhone = async (to, subject, text) => {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       timeout: 15000,
     });
-
+    console.log("✅ Push sent to:", device, "| title:", subject);
     return { success: true };
   } catch (error) {
     console.error("Pushsafer send error:", error?.response?.data || error);
@@ -90,6 +90,6 @@ export const checkThresholdAndAlert = async ({ temp, humid, soil }) => {
   await sendAlertEmail(user.email, "⚠️ IoT Alert", alerts.join("\n"));
   console.log("📩 Alert email sent");
 
-  // await sendAlertPhone(process.env.PUSHSAFER_DEVICE || "a", "⚠️ IoT Alert", alerts.join("\n"));
-  // console.log("📱 Alert push sent");
+  await sendAlertPhone(process.env.PUSHSAFER_DEVICE || "a", "⚠️ IoT Alert", alerts.join("\n"));
+  console.log("📱 Alert push sent");
 };
