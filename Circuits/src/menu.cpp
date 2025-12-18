@@ -211,13 +211,13 @@ void handleTempConfig() {
     lcd.print("Duoi: ");
     lcd.print(tempLowCandidate);
     lcd.print((char)223);
-    lcd.print("C    ");
+    lcd.print("C  ");
   } else {
     tempHighCandidate = mapped;
     lcd.print("Tren: ");
     lcd.print(tempHighCandidate);
     lcd.print((char)223);
-    lcd.print("C    ");
+    lcd.print("C  ");
   }
 
   if (buttonPressedOnce()) {
@@ -263,7 +263,7 @@ void handleSoilConfig() {
       lcd.write(byte(2));
       lcd.print(" Dat:");
       lcd.print(soilPercent);
-      lcd.print("%   ");
+      lcd.print("% ");
 
       lcd.setCursor(0, 1);
       lcd.print("Set NGUONG DUOI");
@@ -273,7 +273,7 @@ void handleSoilConfig() {
       lcd.write(byte(2));
       lcd.print(" Dat:");
       lcd.print(soilPercent);
-      lcd.print("%   ");
+      lcd.print("% ");
 
       lcd.setCursor(0, 1);
       lcd.print("Set NGUONG TREN");
@@ -290,12 +290,12 @@ void handleSoilConfig() {
     soilLowCandidate = mapped;
     lcd.print("Duoi: ");
     lcd.print(soilLowCandidate);
-    lcd.print("%   ");
+    lcd.print("% ");
   } else {
     soilHighCandidate = mapped;
     lcd.print("Tren: ");
     lcd.print(soilHighCandidate);
-    lcd.print("%   ");
+    lcd.print("% ");
   }
 
   if (buttonPressedOnce()) {
@@ -338,7 +338,7 @@ void handleHumidConfig() {
       lcd.write(byte(3));
       lcd.print(" KK:");
       lcd.print(currentHumidity, 1);
-      lcd.print("%   ");
+      lcd.print("% ");
 
       lcd.setCursor(0, 1);
       lcd.print("Set NGUONG DUOI");
@@ -348,7 +348,7 @@ void handleHumidConfig() {
       lcd.write(byte(3));
       lcd.print(" KK:");
       lcd.print(currentHumidity, 1);
-      lcd.print("%   ");
+      lcd.print("% ");
 
       lcd.setCursor(0, 1);
       lcd.print("Set NGUONG TREN");
@@ -365,12 +365,12 @@ void handleHumidConfig() {
     humidLowCandidate = mapped;
     lcd.print("Duoi: ");
     lcd.print(humidLowCandidate);
-    lcd.print("%   ");
+    lcd.print("% ");
   } else {
     humidHighCandidate = mapped;
     lcd.print("Tren: ");
     lcd.print(humidHighCandidate);
-    lcd.print("%   ");
+    lcd.print("% ");
   }
 
   if (buttonPressedOnce()) {
