@@ -1,6 +1,6 @@
 import cron from "node-cron"
 import Schedule from "../models/Schedule.js"
-import { publishSettings } from "../services/mqttService.js"
+import { publishSettings } from "../config/mqtt.js"
 import User from "../models/User.js"
 
 const TIMEZONE = "Asia/Ho_Chi_Minh"
@@ -11,27 +11,32 @@ const toMinutes = (timeStr) => {
 }
 
 cron.schedule(
-    "*/1 * * * *",
+    "*/1 * * * *", 
     async () => {
         const now = new Date()
         const currentTime = now.toTimeString().slice(0, 5)
         const currentMinutes = toMinutes(currentTime)
 
         const schedules = await Schedule.find({})
+        const user = await User.findOne()
 
         for (const s of schedules) {
             const startMin = toMinutes(s.time)
             const endMin = startMin + s.duration
 
-            if (currentMinutes - startMin <= 1) {
-                console.log(`▶️ START ${s.action}`)
-                publishSettings({ [s.action]: true })
-                const user = await User.findOne();
-                if (s.action === "pump" && user.pump !== true)
-                    user.pump = true;
-                if (s.action === "light" && user.light !== true)
-                    user.light = true;
-                await user.save();
+            /* ===== START ===== */
+            if (currentMinutes === startMin) {
+                if (s.action === "pump" && user.pump === false) {
+                    console.log(`▶️ START pump`)
+                    publishSettings({ pump: true })
+                    user.pump = true
+                }
+
+                if (s.action === "light" && user.light === false) {
+                    console.log(`▶️ START light`)
+                    publishSettings({ light: true })
+                    user.light = true
+                }
             }
 
             const hasNextSchedule = schedules.some(
@@ -40,20 +45,23 @@ cron.schedule(
                     toMinutes(next.time) === endMin
             )
 
-            if (
-                currentMinutes - endMin <= 1 &&
-                !hasNextSchedule
-            ) {
-                console.log(`⏹ STOP ${s.action}`)
-                publishSettings({ [s.action]: false })
-                const user = await User.findOne();
-                if (s.action === "pump")
-                    user.pump = false;
-                if (s.action === "light")
-                    user.light = false;
-                await user.save();
+            /* ===== STOP ===== */
+            if (currentMinutes === endMin && !hasNextSchedule) {
+                if (s.action === "pump" && user.pump === true) {
+                    console.log(`⏹ STOP pump`)
+                    publishSettings({ pump: false })
+                    user.pump = false
+                }
+
+                if (s.action === "light" && user.light === true) {
+                    console.log(`⏹ STOP light`)
+                    publishSettings({ light: false })
+                    user.light = false
+                }
             }
         }
+
+        await user.save()
     },
     { timezone: TIMEZONE }
 )
