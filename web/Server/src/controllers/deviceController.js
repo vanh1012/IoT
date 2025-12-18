@@ -60,7 +60,7 @@ export const controlDevice = async (req, res) => {
     // -------- LOG hành động -------
     await Log.createLog({
       type: "MANUAL",
-      message: `Device ${type} was turned ${state ? "ON" : "OFF"} from web`
+      message: `Thiết bị ${type} đã được ${state ? "Bật" : "Tắt"} từ web`
     });
 
     res.json({
@@ -190,7 +190,7 @@ export const updateThreshold = async (req, res) => {
     // -------- LOG -------
     await Log.createLog({
       type: "MANUAL",
-      message: `Threshold updated from web: ${changes.join(" | ")}`
+      message: `Ngưỡng cập nhật từ web : ${changes.join(" | ")}`
     });
 
     res.json({
@@ -201,5 +201,62 @@ export const updateThreshold = async (req, res) => {
 
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+};
+
+
+export const updateThresholdFromMQTT = async (thresholds) => {
+  try {
+    const user = await User.findOne();
+    if (!user) {
+      console.warn("User not found when updating threshold from MQTT");
+      return;
+    }
+
+    let changes = [];
+
+    if (
+      thresholds.tempThresholdLowC !== undefined &&
+      thresholds.tempThresholdHighC !== undefined
+    ) {
+      user.tempThresholdLowC = thresholds.tempThresholdLowC;
+      user.tempThresholdHighC = thresholds.tempThresholdHighC;
+      changes.push(
+        `Temp: ${thresholds.tempThresholdLowC}°C → ${thresholds.tempThresholdHighC}°C`
+      );
+    }
+
+    if (
+      thresholds.humidThresholdLowPercent !== undefined &&
+      thresholds.humidThresholdHighPercent !== undefined
+    ) {
+      user.humidThresholdLowPercent = thresholds.humidThresholdLowPercent;
+      user.humidThresholdHighPercent = thresholds.humidThresholdHighPercent;
+      changes.push(
+        `Humid: ${thresholds.humidThresholdLowPercent}% → ${thresholds.humidThresholdHighPercent}%`
+      );
+    }
+
+    if (
+      thresholds.soilThresholdLowPercent !== undefined &&
+      thresholds.soilThresholdHighPercent !== undefined
+    ) {
+      user.soilThresholdLowPercent = thresholds.soilThresholdLowPercent;
+      user.soilThresholdHighPercent = thresholds.soilThresholdHighPercent;
+      changes.push(
+        `Soil: ${thresholds.soilThresholdLowPercent}% → ${thresholds.soilThresholdHighPercent}%`
+      );
+    }
+
+    await user.save();
+
+    await Log.createLog({
+      type: "MANUAL",
+      message: `Ngưỡng cập nhật từ ESP32 : ${changes.join(" | ")}`
+    });
+
+    console.log("💾 Threshold updated in DB from MQTT");
+  } catch (err) {
+    console.error("Error updating threshold from MQTT:", err.message);
   }
 };

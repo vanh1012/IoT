@@ -24,3 +24,9 @@ export const getLogsApi = async () => {
     const res = await axios.get("/logs");
     return res.data.data;
 }
+
+
+export const getLastestApi = async () => {
+    const res = await axios.get("/sensors/latest");
+    return res.data;
+}

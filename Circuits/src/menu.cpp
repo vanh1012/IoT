@@ -418,8 +418,10 @@ void handlePumpStatusScreen() {
   }
 
   if (buttonPressedOnce()) {
-    if (pumpOn) turnPumpOff();
+    if (pumpOn)
+     turnPumpOff();
     else        turnPumpOn();
+    mqttPublishData("logDevicePump");
     enterMenuMode();
   }
 }
@@ -439,6 +441,7 @@ void handleLightStatusScreen() {
   if (buttonPressedOnce()) {
     if (lightOn) turnLightOff();
     else         turnLightOn();
+    mqttPublishData("logDeviceLight");
     enterMenuMode();
   }
 }
@@ -463,6 +466,7 @@ void mqttPublishThreshold()
     char jsonBuffer[256];
     serializeJson(doc, jsonBuffer);
     mqttClient.publish(thresHolTopic, jsonBuffer, true);
+    mqttPublishData("logThreshold");
     isChange = false;
   }
 }

@@ -66,10 +66,14 @@ export function AutomaticSchedules({ }) {
                             <label className="block text-sm font-semibold text-gray-900 mb-2">Thời Gian</label>
                             <input
                                 type="time"
+                                lang="vi"
                                 value={formData.time}
-                                onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                                onChange={(e) =>
+                                    setFormData({ ...formData, time: e.target.value })
+                                }
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                             />
+
                         </div>
                         <div>
                             <label className="block text-sm font-semibold text-gray-900 mb-2">Thời Lượng (phút)</label>

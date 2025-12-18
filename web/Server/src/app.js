@@ -7,7 +7,7 @@ dotenv.config();
 // const hash = await bcrypt.hash("123456", 10);
 // console.log(hash);
 
-import  connection  from './config/db.js';
+import connection from './config/db.js';
 import { startMQTT } from "./config/mqtt.js"
 // đảm bảo kết nối đến Database trước  MQTT
 const start = async () => {
@@ -30,8 +30,9 @@ import predictionRoutes from './routes/predictionRoutes.js';
 dotenv.config();
 // import mqttRoutes from "./routes/mqttRoutes.js";
 import getRoutes from "./routes/getRoutes.js";
-import authRoutes   from "./routes/authRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
 import scheduleRoutes from "./routes/scheduleRoutes.js"
+import "./services/scheduleCron.js";
 
 const app = express();
 app.use(cors());
@@ -40,7 +41,7 @@ app.use('/api/sensors', sensorRoutes);
 app.use("/api/device", deviceRoutes);
 // app.use("/api/mqtt", mqttRoutes)
 app.use("/api/auth", authRoutes);
-app.use("/api/schedule", scheduleRoutes );
+app.use("/api/schedule", scheduleRoutes);
 app.use("/api/", getRoutes);
 app.use("/api/project-bot", projectBotRoutes);
 app.use("/api/prediction", predictionRoutes);

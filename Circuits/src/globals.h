@@ -70,6 +70,7 @@ extern bool   soilOverThreshold;
 extern bool   humidOverThreshold;
 
 extern uint8_t alertFlags;
+extern uint8_t lastAlertFlags;
 extern const uint8_t ALERT_TEMP;
 extern const uint8_t ALERT_SOIL;
 extern const uint8_t ALERT_HUMID;

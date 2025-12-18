@@ -64,6 +64,7 @@ bool   tempOverThreshold  = false;
 bool   soilOverThreshold  = false;
 bool   humidOverThreshold = false;
 uint8_t alertFlags        = 0;
+uint8_t lastAlertFlags  = 0xFF;
 const uint8_t ALERT_TEMP  = 0x01;
 const uint8_t ALERT_SOIL  = 0x02;
 const uint8_t ALERT_HUMID = 0x04;

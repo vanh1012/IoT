@@ -168,9 +168,37 @@ void mqttPublishData(const char *topic)
         serializeJson(doc, jsonBuffer);
         mqttClient.publish(sensorTopic, jsonBuffer);
     }
-    if(strcmp(topic, logTopic) == 0)
+    if(strcmp(topic, "logDevicePump") == 0)
     {
+        doc["type"] = "PUMP_STATUS";
+        doc["pumpStatus"] = pumpOn ? "ON" : "OFF";
+    
+        char jsonBuffer[128];
+        serializeJson(doc, jsonBuffer);
+        mqttClient.publish(logTopic, jsonBuffer);
+    }
+    if(strcmp(topic, "logDeviceLight") == 0)
+    {
+        doc["type"] = "LIGHT_STATUS";
+        doc["lightStatus"] = lightOn ? "ON" : "OFF";
+    
+        char jsonBuffer[128];
+        serializeJson(doc, jsonBuffer);
+        mqttClient.publish(logTopic, jsonBuffer);
+    }
 
+    if(strcmp(topic, "logThreshold") == 0)
+    {   doc["type"] = "THRESHOLD_UPDATE";
+        doc["tempThresholdLowC"] = tempThresholdLowC;
+        doc["tempThresholdHighC"] = tempThresholdHighC;
+        doc["soilThresholdLowPercent"] = soilThresholdLowPercent;
+        doc["soilThresholdHighPercent"] = soilThresholdHighPercent;
+        doc["humidThresholdLowPercent"] = humidThresholdLowPercent;
+        doc["humidThresholdHighPercent"] = humidThresholdHighPercent;
+    
+        char jsonBuffer[256];
+        serializeJson(doc, jsonBuffer);
+        mqttClient.publish(logTopic, jsonBuffer);
     }
 }
 

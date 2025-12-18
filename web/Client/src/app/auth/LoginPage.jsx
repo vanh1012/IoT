@@ -63,7 +63,7 @@ export default function LoginPage() {
                         Smart Plant Care
                     </CardTitle>
                     <CardDescription className="text-center">
-                        Sign in to your account
+                        Đăng nhập
                     </CardDescription>
                 </CardHeader>
 
@@ -84,7 +84,7 @@ export default function LoginPage() {
 
                         {/* Password */}
                         <div className="space-y-2">
-                            <Label htmlFor="password">Password</Label>
+                            <Label htmlFor="password">Mật khẩu</Label>
                             <div className="relative">
                                 <Input
                                     id="password"
@@ -118,22 +118,9 @@ export default function LoginPage() {
 
                         {/* Submit */}
                         <Button type="submit" className="w-full" disabled={loading}>
-                            {loading ? "Signing in..." : "Sign in"}
+                            {loading ? "Đang xử lí..." : "Đăng nhập"}
                         </Button>
                     </form>
-
-                    {/* Footer */}
-                    <div className="mt-6 text-center text-sm">
-                        <span className="text-muted-foreground">
-                            Don't have an account?
-                        </span>{" "}
-                        <Link
-                            to="/signup"
-                            className="text-primary hover:underline font-medium"
-                        >
-                            Sign up
-                        </Link>
-                    </div>
                 </CardContent>
             </Card>
         </div>
