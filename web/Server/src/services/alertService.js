@@ -25,15 +25,15 @@ export const checkThresholdAndAlert = async ({ temp, humid, soil }) => {
   let alerts = [];
 
   if (temp < user.tempThresholdLowC || temp > user.tempThresholdHighC) {
-    alerts.push(`⚠️ Temperature out of range: ${temp}°C`);
+    alerts.push(`⚠️ Nhiệt độ không nằm trong vùng an toàn: ${temp}°C (${user.tempThresholdLowC}°C - ${user.tempThresholdHighC}°C)`);
   }
 
   if (humid < user.humidThresholdLowPercent || humid > user.humidThresholdHighPercent) {
-    alerts.push(`⚠️ Humidity out of range: ${humid}%`);
+    alerts.push(`⚠️ Độ ẩm KK không nằm trong vùng an toàn: ${humid}% (${user.humidThresholdLowPercent}% - ${user.humidThresholdHighPercent}%)`);
   }
 
   if (soil < user.soilThresholdLowPercent || soil > user.soilThresholdHighPercent) {
-    alerts.push(`⚠️ Soil moisture out of range: ${soil}%`);
+    alerts.push(`⚠️ Độ ẩm đất không nằm trong vùng an toàn: ${soil}% (${user.soilThresholdLowPercent}% - ${user.soilThresholdHighPercent}%)`);
   }
 
   if (alerts.length === 0) {
@@ -49,7 +49,7 @@ export const checkThresholdAndAlert = async ({ temp, humid, soil }) => {
 
   await sendAlertEmail(
     user.email,
-    "⚠️ IoT Alert",
+    "⚠️ IoT cảnh báo: Ngưỡng môi trường không nằm trong giới hạn",
     alerts.join("\n")
   );
 

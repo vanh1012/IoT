@@ -40,7 +40,7 @@ export const startMQTT = () => {
 
   client.on("message", async (topic, message) => {
     try {
-      if (topic === sensorData) { // nhận dữ liệu cảm biết
+      if (topic === sensorData) { // nhận dữ liệu cảm biến
         const json = JSON.parse(message.toString());
 
         await saveIfChanged({
