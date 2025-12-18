@@ -3,7 +3,8 @@ import Sensor from "../models/Sensor.js";
 import User from "../models/User.js"
 import { saveIfChanged } from "../services/sensorService.js";
 import { sendAlertEmail, checkThresholdAndAlert } from "../services/alertService.js"
-
+import Log from "../models/Log.js";
+import { updateThresholdFromMQTT } from "../controllers/deviceController.js"
 let client = null;
 
 // subscribe 
@@ -57,8 +58,41 @@ export const startMQTT = () => {
         return;
       }
 
-      if (topic === logData) { // nhận lại hoạt động bật tắt bơm/đèn, chỉnh sửa ngưỡng từ esp32
-        console.log("LOG Message:", message.toString());
+      if (topic === logData) {
+        const json = JSON.parse(message.toString());
+        console.log("Log from ESP32:", json);
+
+        if (json?.type === "PUMP_STATUS" || json?.type === "LIGHT_STATUS") {
+          const user = await User.findOne();
+          if (!user) return;
+
+          if (json.pumpStatus !== undefined) {
+            const pumpState = json.pumpStatus === "ON";
+            user.pump = pumpState;
+
+            await Log.createLog({
+              type: "MANUAL",
+              message: `Thiết bị pump đã được ${pumpState ? "Bật" : "Tắt"} từ mạch ESP32`,
+            });
+          }
+
+          if (json.lightStatus !== undefined) {
+            const lightState = json.lightStatus === "ON";
+            user.light = lightState;
+
+            await Log.createLog({
+              type: "MANUAL",
+              message: `Thiết bị light đã được ${lightState ? "Bật" : "Tắt"} từ mạch ESP32`,
+            });
+          }
+
+          await user.save();
+          console.log("💾 User device status updated from ESP32");
+        }
+        if (json?.type === "THRESHOLD_UPDATE")
+        {
+          updateThresholdFromMQTT(json);
+        }
         return;
       }
 
