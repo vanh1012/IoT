@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import brycpt from "bcrypt"
+import {sendAlertPhone} from "../services/alertService.js";
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = "7d";
 
@@ -40,7 +41,7 @@ export const register = async (req, res) => {
     const hashedPassword =  brycpt.hashSync(password,10);
     const user = await User.create({ username, email, password: hashedPassword });
     const token = generateToken(user._id);
-    
+    await sendAlertPhone(process.env.PUSHSAFER_DEVICE, "New User Registered!", `User ${username} has registered.`);
     res.status(201).json({
       success: true,
       message: "User registered successfully",

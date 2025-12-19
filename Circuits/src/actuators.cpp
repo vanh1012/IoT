@@ -1,4 +1,5 @@
 #include "actuators.h"
+#include "hardware.h"
 
 void applyPumpState() {
   // Nếu relay active HIGH:

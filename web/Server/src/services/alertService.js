@@ -86,9 +86,4 @@ export const checkThresholdAndAlert = async ({ temp, humid, soil }) => {
     "⚠️ IoT cảnh báo: Ngưỡng môi trường không nằm trong giới hạn",
     alerts.join("\n")
   );
-
-  console.log("📩 Alert email sent");
-
-  await sendAlertPhone(process.env.PUSHSAFER_DEVICE || "a", "⚠️ IoT Alert", alerts.join("\n"));
-  console.log("📱 Alert push sent");
 };

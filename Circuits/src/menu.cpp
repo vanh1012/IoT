@@ -2,6 +2,7 @@
 #include "menu.h"
 #include "connect.h"
 #include "globals.h"
+#include "hardware.h"
 bool isChange = false;
 // ===== CUSTOM CHAR =====
 static byte cursorChar[8] = {
@@ -400,9 +401,12 @@ void handlePumpStatusScreen() {
   }
 
   if (buttonPressedOnce()) {
-    if (pumpOn)
+    if (pumpOn) {
      turnPumpOff();
-    else        turnPumpOn();
+    }
+    else {
+      turnPumpOn();
+    }
     mqttPublishData("logDevicePump");
     enterMenuMode();
   }
