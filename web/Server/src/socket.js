@@ -10,7 +10,6 @@ import app from "./app.js";
 import connection from "./config/db.js";
 import { startMQTT } from "./config/mqtt.js";
 
-console.log(process.env.GMAIL_USER)
 const PORT = 5000;
 
 // 1. Tạo http server

@@ -6,20 +6,10 @@ import { Card } from "./ui/card"
 import { Droplets, Thermometer, Wind, Clock, Loader } from "lucide-react"
 
 export function SensorData() {
-    const { data, fetchLatestData, loading } = useSensor();
+    const { data } = useSensor();
     return (
         <>
-            <div className="flex justify-end mb-4">
-                <Button
-                    onClick={fetchLatestData}
-                    disabled={loading}
-                    variant="outline"
-                    size="sm"
-                    className="gap-2 cursor-pointer"
-                >
-                    {loading && <Loader className="w-4 h-4 animate-spin" />}
-                    Cập nhật
-                </Button>
+            <div className="flex justify-end mb-4"> 
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {/* Soil Moisture */}

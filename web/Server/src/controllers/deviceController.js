@@ -48,8 +48,8 @@ export const controlDevice = async (req, res) => {
 
     // 5️⃣ Gửi email
     try {
-      const subject = `⚠️ Thiết bị ${type} đã được ${state ? "bật" : "tắt"}`;
-      const text = `thiết bị "${type}" được ${state ? "bật" : "tắt"}.\n\nThời gian: ${new Date().toLocaleString()}`;
+      const subject = `⚠️ Thiết bị ${type} đã được ${state ? "bật" : "tắt"} từ web`;
+      const text = `thiết bị ${type} được ${state ? "bật" : "tắt"}.\n\nThời gian: ${new Date().toLocaleString()}`;
       await sendAlertEmail(updatedUser.email, subject, text);
     } catch (err) {
       console.log("Email send failed:", err.message);

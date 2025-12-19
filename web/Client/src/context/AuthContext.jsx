@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { controlerDeviceApi, getMeApi, updateThresholdApi } from "../services/auth.service";
+import { socket } from "../socket.js";
 
 const AuthContext = createContext(null);
 
@@ -26,7 +27,65 @@ export function AuthProvider({ children }) {
     checkAuth();
   }, []);
 
+  useEffect(() => {
+    socket.connect();
+    console.log("🟢 Socket connected");
 
+    socket.on("device:update", ({ type, state }) => {
+      setUser((prev) => {
+        if (!prev) return prev;
+        return { ...prev, [type]: state };
+      });
+    });
+
+    socket.on("threshold:update", (payload) => {
+      console.log("📡 Threshold realtime update:", payload);
+
+      setUser((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          ...payload,
+        };
+      });
+    });
+
+    return () => {
+      socket.off("device:update");
+      socket.off("threshold:update");
+      socket.disconnect();
+    };
+  }, []);
+
+useEffect(() => {
+  socket.connect();
+  console.log("🟢 Socket connected");
+
+  socket.on("device:update", ({ type, state }) => {
+    setUser((prev) => {
+      if (!prev) return prev;
+      return { ...prev, [type]: state };
+    });
+  });
+
+  socket.on("threshold:update", (payload) => {
+    console.log("📡 Threshold realtime update:", payload);
+
+    setUser((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        ...payload,
+      };
+    });
+  });
+
+  return () => {
+    socket.off("device:update");
+    socket.off("threshold:update");
+    socket.disconnect();
+  };
+}, []);
 
 
   const login = async (email, password) => {
@@ -67,7 +126,6 @@ export function AuthProvider({ children }) {
 
   const logout = () => {
     localStorage.removeItem("token");
-    setToken(null);
     setUser(null);
   };
 
@@ -92,13 +150,21 @@ export function AuthProvider({ children }) {
 
   const controlDevice = async ({ type, state }) => {
     try {
-      const res = await controlerDeviceApi({ type, state });
-      setUser(pre => ({ ...pre, [type]: state }));
+      setUser((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          [type]: state,
+        };
+      });
+
+      await controlerDeviceApi({ type, state });
+    } catch (err) {
+      console.error("Control device error:", err);
     }
-    catch (err) {
-      console.error(err);
-    }
-  }
+  };
+
+
   const value = {
     user,
     loading,
@@ -121,4 +187,3 @@ export function useAuth() {
   return context;
 }
 
-export default AuthContext;

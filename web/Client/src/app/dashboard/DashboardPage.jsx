@@ -13,20 +13,6 @@ import { AIChatbox } from "../../components/AIChatBot";
 
 export default function DashboardPage() {
 
-    const [notifications, setNotifications] = useState([
-        {
-            id: "1",
-            type: "warning",
-            message: "Độ ẩm đạt ngưỡng - cần tưới nước",
-            timestamp: "10:45",
-        },
-        {
-            id: "2",
-            type: "success",
-            message: "Máy bơm hoạt động bình thường",
-            timestamp: "12:15",
-        },
-    ]);
     return (
         <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-blue-50 p-4 md:p-8">
             <div className="max-w-7xl mx-auto">
@@ -38,10 +24,6 @@ export default function DashboardPage() {
                     <p className="text-gray-600">
                         Giám sát và điều khiển hệ thống tưới cây, đèn, và cảm biến môi trường
                     </p>
-                </div>
-
-                <div className="mb-8">
-                    <Notifications notifications={notifications} />
                 </div>
 
                 <div className="mb-8">

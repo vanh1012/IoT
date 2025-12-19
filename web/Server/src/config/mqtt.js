@@ -5,6 +5,8 @@ import { saveIfChanged } from "../services/sensorService.js";
 import { sendAlertEmail, checkThresholdAndAlert, sendAlertPhone } from "../services/alertService.js"
 import Log from "../models/Log.js";
 import { updateThresholdFromMQTT } from "../controllers/deviceController.js"
+import { io } from "../socket.js"; 
+
 let client = null;
 
 // subscribe 
@@ -74,6 +76,20 @@ export const startMQTT = () => {
               type: "MANUAL",
               message: `Thiết bị pump đã được ${pumpState ? "Bật" : "Tắt"} từ mạch ESP32`,
             });
+
+            try {
+                  const subject = `⚠️ Thiết bị pump đã được ${pumpState ? "bật" : "tắt"} từ ESP32`;
+                  const text = `thiết bị pump được ${pumpState ? "bật" : "tắt"}.\n\nThời gian: ${new Date().toLocaleString()}`;
+                  await sendAlertEmail(user.email, subject, text);
+                } catch (err) {
+                  console.log("Email send failed:", err.message);
+            }
+            
+            //socket
+            io.emit("device:update", {
+              type: "pump",
+              state: pumpState,
+            });
           }
 
           if (json.lightStatus !== undefined) {
@@ -84,6 +100,17 @@ export const startMQTT = () => {
               type: "MANUAL",
               message: `Thiết bị light đã được ${lightState ? "Bật" : "Tắt"} từ mạch ESP32`,
             });
+            try {
+                  const subject = `⚠️ Thiết bị light đã được ${lightState ? "bật" : "tắt"} từ ESP32`;
+                  const text = `thiết bị light được ${lightState ? "bật" : "tắt"}.\n\nThời gian: ${new Date().toLocaleString()}`;
+                  await sendAlertEmail(user.email, subject, text);
+                } catch (err) {
+                  console.log("Email send failed:", err.message);
+            }
+            io.emit("device:update", {
+            type: "light",
+            state: lightState,
+          });
           }
 
           await user.save();
@@ -125,6 +152,14 @@ export const startMQTT = () => {
 
         await user.save();
         console.log("💾 Threshold updated in DB");
+        io.emit("threshold:update", {
+            tempThresholdLowC: user.tempThresholdLowC,
+            tempThresholdHighC: user.tempThresholdHighC,
+            soilThresholdLowPercent: user.soilThresholdLowPercent,
+            soilThresholdHighPercent: user.soilThresholdHighPercent,
+            humidThresholdLowPercent: user.humidThresholdLowPercent,
+            humidThresholdHighPercent: user.humidThresholdHighPercent,
+          });
         return;
       }
 
@@ -194,7 +229,7 @@ export const publishThresholdOnce = async () => {
     }
   }
 
-  client.publish(thresHoldValueTopic, JSON.stringify(payload), { qos: 1 });
+  client.publish(thresHoldValueTopic, JSON.stringify(payload), { qos: 1 });//gửi ít nhất 1 lần 
   console.log("📤 Sent thresholds →", payload);
 };
 
