@@ -121,6 +121,13 @@ export default function LoginPage() {
                             {loading ? "Đang xử lí..." : "Đăng nhập"}
                         </Button>
                     </form>
+                    <Link className="mt-4 inline-flex items-center justify-center rounded-md
+                        bg-primary text-primary-foreground
+                        px-4 py-2 font-medium transition
+                        hover:bg-primary/90
+                        disabled:opacity-50 disabled:cursor-not-allowedmt-2 w-full bg-yellow-400 hover:bg-yellow-300" to="/register">
+                        Đăng kí
+                    </Link>
                 </CardContent>
             </Card>
         </div>

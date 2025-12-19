@@ -40,7 +40,7 @@ export const register = async (req, res) => {
     const hashedPassword =  brycpt.hashSync(password,10);
     const user = await User.create({ username, email, password: hashedPassword });
     const token = generateToken(user._id);
-
+    
     res.status(201).json({
       success: true,
       message: "User registered successfully",
