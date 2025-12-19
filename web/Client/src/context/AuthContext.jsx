@@ -48,6 +48,22 @@ export function AuthProvider({ children }) {
     return data;
   };
 
+  const register = async (username, email, password) => {
+      const response = await fetch(`${API_URL}/api/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, email, password }),
+      });
+
+  const data = await response.json();
+      console.log(data)
+  if (!data.success) {
+    throw new Error(data.message || "Register failed");
+  }
+
+  return data;
+};
+
 
   const logout = () => {
     localStorage.removeItem("token");
@@ -88,6 +104,7 @@ export function AuthProvider({ children }) {
     loading,
     login,
     logout,
+    register,
     updateThreshold,
     controlDevice,
     isAuthenticated: !!user,

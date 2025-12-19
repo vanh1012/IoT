@@ -52,7 +52,7 @@ cron.schedule(
             const hasNextSchedule = schedules.some(
                 (next) =>
                     next.action === s.action &&
-                    toMinutes(next.time) === endMin
+                    toMinutes(next.time) == endMin
             )
 
             /* ===== STOP ===== */

@@ -20,6 +20,7 @@ extern const int DHT_PIN;
 extern const int RELAY_PUMP_PIN;
 extern const int RELAY_LIGHT_PIN;
 extern const int STATUS_LED_PIN;
+extern const int BUZZER_PIN;
 
 // ================== MODE ==================
 enum Mode {

@@ -1,9 +1,11 @@
-import transporter from "../config/nodemailer.js";
+import { getTransporter } from "../config/nodemailer.js";
+
 import User from "../models/User.js";
 import axios from "axios";
 
 export const sendAlertEmail = async (to, subject, text) => {
   try {
+    const transporter = getTransporter();
     await transporter.sendMail({
       from: process.env.GMAIL_USER,
       to: to,
@@ -86,9 +88,4 @@ export const checkThresholdAndAlert = async ({ temp, humid, soil }) => {
     "⚠️ IoT cảnh báo: Ngưỡng môi trường không nằm trong giới hạn",
     alerts.join("\n")
   );
-
-  console.log("📩 Alert email sent");
-
-  await sendAlertPhone(process.env.PUSHSAFER_DEVICE || "a", "⚠️ IoT Alert", alerts.join("\n"));
-  console.log("📱 Alert push sent");
 };

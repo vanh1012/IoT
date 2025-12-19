@@ -21,6 +21,7 @@ const int DHT_PIN         = 32;
 const int RELAY_PUMP_PIN  = 4;
 const int RELAY_LIGHT_PIN = 16;
 const int STATUS_LED_PIN  = 15;
+const int BUZZER_PIN = 5; // ví dụ GPIO 5 (an toàn)
 
 // Mode & menu
 Mode currentMode = MODE_MENU;
@@ -90,7 +91,7 @@ void loop() {
   readSensors();
   updateThresholdStates();
   updateStatusLed();
-
+  updateBuzzer();
   // 2. UI state machine
   switch (currentMode) {
     case MODE_MENU:
