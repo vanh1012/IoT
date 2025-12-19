@@ -3,3 +3,4 @@
 
 void setupHardware();
 void updateStatusLed();
+void updateBuzzer();
