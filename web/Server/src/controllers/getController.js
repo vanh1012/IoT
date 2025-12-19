@@ -18,83 +18,38 @@ export const getLogs = async (req, res) => {
 
 export const getSensorChart24h = async (req, res) => {
   try {
-    const now = new Date();
-    const startTime = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const MAX_SAMPLES = 30;
 
-    const history = await Sensor.aggregate([
-      {
-        $match: {
-          timestamp: { $gte: startTime }
-        }
-      },
-      {
-        $project: {
-          hour: {
-            $dateTrunc: {
-              date: "$timestamp",
-              unit: "hour",
-              binSize: 4
-            }
-          },
-          airTemperature: 1,
-          airHumidity: 1,
-          soilMoisture: 1
-        }
-      },
-      {
-        $sort: { timestamp: 1 }
-      },
-      {
-        $group: {
-          _id: "$hour",
-          temp: { $last: "$airTemperature" },
-          humid: { $last: "$airHumidity" },
-          soil: { $last: "$soilMoisture" }
-        }
-      },
-      {
-        $sort: { _id: 1 }
-      }
-    ]);
+    const latest = await Sensor.findOne().sort({ timestamp: -1 });
+    if (!latest) return res.json([]);
 
-    const map = {};
-    history.forEach(item => {
-      map[item._id.toISOString()] = item;
-    });
+    // 2. Mốc 24h trước
+    const fromTime = new Date(latest.timestamp.getTime() - 24 * 60 * 60 * 1000);
 
-    const data = [];
+    // 3. Lấy tất cả dữ liệu 24h (cũ -> mới)
+    const data = await Sensor.find({
+      timestamp: { $gte: fromTime, $lte: latest.timestamp },
+    }).sort({ timestamp: 1 });
 
-    for (let i = 5; i >= 0; i--) {
-      const hour = new Date(now.getTime() - i * 4 * 60 * 60 * 1000);
-      hour.setMinutes(0, 0, 0);
-
-      const key = hour.toISOString();
-
-      if (map[key]) {
-        data.push({
-          hour,
-          temp: map[key].temp,
-          humid: map[key].humid,
-          soil: map[key].soil
-        });
-      } else {
-        data.push({
-          hour,
-          temp: null,
-          humid: null,
-          soil: null
-        });
-      }
-    }
+    let sampled = downSample(data.reverse(), MAX_SAMPLES);
 
     res.json({
-      success: true,
-      range: "last_24_hours",
-      interval: "4_hours",
-      data
+      returned: sampled.length,
+      data: sampled,
     });
-
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
+};
+const downSample = (data, maxSamples) => {
+  if (data.length <= maxSamples) return data;
+
+  const step = Math.floor(data.length / maxSamples);
+  const result = [];
+
+  for (let i = 0; i < data.length && result.length < maxSamples; i += step) {
+    result.push(data[i]);
+  }
+
+  return result;
 };

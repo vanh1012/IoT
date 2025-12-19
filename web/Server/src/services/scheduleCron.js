@@ -11,7 +11,7 @@ const toMinutes = (timeStr) => {
 }
 
 cron.schedule(
-    "*/1 * * * *", 
+    "*/1 * * * *",
     async () => {
         const now = new Date()
         const currentTime = now.toTimeString().slice(0, 5)
@@ -21,11 +21,12 @@ cron.schedule(
         const user = await User.findOne()
 
         for (const s of schedules) {
+            console.log(`Checking schedule: ${s.action} at ${s.time} for ${s.duration} mins`)
             const startMin = toMinutes(s.time)
             const endMin = startMin + s.duration
-
+            console.log({ currentMinutes, startMin, endMin })
             /* ===== START ===== */
-            if (currentMinutes === startMin) {
+            if (currentMinutes == startMin) {
                 if (s.action === "pump" && user.pump === false) {
                     console.log(`▶️ START pump`)
                     publishSettings({ pump: true })
@@ -35,7 +36,6 @@ cron.schedule(
                         type: "AUTO",
                         message: `Bơm được bật theo lịch vào lúc ${s.time} trong ${s.duration} phút.`,
                     })
-
                 }
 
                 if (s.action === "light" && user.light === false) {
@@ -56,7 +56,7 @@ cron.schedule(
             )
 
             /* ===== STOP ===== */
-            if (currentMinutes === endMin && !hasNextSchedule) {
+            if (currentMinutes == endMin && !hasNextSchedule) {
                 if (s.action === "pump" && user.pump === true) {
                     console.log(`⏹ STOP pump`)
                     publishSettings({ pump: false })

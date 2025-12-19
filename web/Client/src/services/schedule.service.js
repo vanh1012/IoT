@@ -15,4 +15,5 @@ export async function createScheduleApi({ action, time, duration }) {
 
 export async function deleteScheduleAPi({ id }) {
     const res = await axios.delete(`/schedule/${id}`);
+    return res.data;
 }

@@ -30,3 +30,8 @@ export const getLastestApi = async () => {
     const res = await axios.get("/sensors/latest");
     return res.data;
 }
+
+export const getDataChartApi = async () => {
+    const res = await axios.get("/chart");
+    return res.data.data;
+}
