@@ -23,21 +23,27 @@ const userSchema = new mongoose.Schema({
   light: { type: Boolean, default: false },
   tempThresholdLowC: {
     type: Number,
+    default : 10
   },
   tempThresholdHighC: {
-    type: Number
+    type: Number,
+    default : 35
   },
   soilThresholdLowPercent: {
-    type: Number
+    type: Number,
+    default : 30
   },
   soilThresholdHighPercent: {
-    type: Number
+    type: Number,
+    default : 60,
   },
   humidThresholdLowPercent: {
-    type: Number
+    type: Number,
+    default : 20
   },
   humidThresholdHighPercent: {
-    type: Number
+    type: Number,
+    default : 70
   },
   createdAt: {
     type: Date,

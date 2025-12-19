@@ -161,7 +161,7 @@ void mqttPublishData(const char *topic)
     if(strcmp(topic,sensorTopic) == 0)
     {
         doc["soil"] = soilPercent;
-        doc["air"] = currentHumidity;
+        doc["air"]  = currentHumidity;
         doc["temp"] = currentTemp;
     
         char jsonBuffer[128];
